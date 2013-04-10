@@ -11,6 +11,10 @@
     new/4,
     lowerleft/1,
     upperright/1,
+    x1/1,
+    y1/1,
+    x2/1,
+    y2/1,
     dimensions/1,
     area/1,
     margin/1,
@@ -39,6 +43,26 @@ new(X, Y) ->
 
 new(X, Y, W, H) when W >= 0, H >= 0 ->
     {X, Y, W, H}.
+
+-spec x1(bound()) -> number().
+
+x1({X, _, _, _}) ->
+    X.
+
+-spec y1(bound()) -> number().
+
+y1({_, Y, _, _}) ->
+    Y.
+
+-spec x2(bound()) -> number().
+
+x2({X, _, W, _}) ->
+    X + W.
+
+-spec y2(bound()) -> number().
+
+y2({_, Y, _, H}) ->
+    Y + H.
 
 -spec lowerleft(bound()) -> {number(), number()}.
 
