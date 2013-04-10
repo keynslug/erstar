@@ -94,16 +94,16 @@ update_root(RStar, Root) ->
 insert_leaf(Leaf, Node0, Params) ->
     case has_leaves(Node0) of
         true ->
-            insert_child([Leaf], Node0, Params);
+            insert_child(Leaf, Node0, Params);
         _False ->
             {SubNode0, Node} = pick_subnode(bound(Leaf), Node0),
             SubNode = insert_leaf(Leaf, SubNode0, Params),
             insert_child(SubNode, Node, Params)
     end.
 
-pick_subnode(Bound, {_, Bound, Children}) ->
-    {Picked, Rest} = pick_node(Bound, Children),
-    {Picked, {Bound, Rest}}.
+pick_subnode(Against, {_, Bound, Children}) ->
+    {Picked, Rest} = pick_node(Against, Children),
+    {Picked, newnode(Bound, Rest)}.
 
 pick_node(Bound, Nodes = [Node | _]) ->
     pick_node(has_leaves(Node), Bound, Nodes).
@@ -114,12 +114,21 @@ pick_node(true, Bound, Nodes) ->
 pick_node(_False, Bound, Nodes) ->
     needs_least(area, Bound, Nodes).
 
-insert_child(Children, {_, _, ChildrenWere}, Params = {_, MaxCap, _, _}) when length(Children) + length(ChildrenWere) > MaxCap ->
-    split_nodes(Children ++ ChildrenWere, Params);
+insert_child(List, Node, Params) when is_list(List) ->
+    insert_children(List, Node, Params);
 
-insert_child(Children, {_, Bound, ChildrenWere}, _Params) ->
-    NowBound = unify_bounds(Children, Bound),
-    newnode(NowBound, Children ++ ChildrenWere).
+insert_child(Child, {_, _, Children}, Params = {_, MaxCap, _, _}) when length(Children) + 1 > MaxCap ->
+    split_nodes([Child | Children], Params);
+
+insert_child(Child, {_, Bound, Children}, _Params) ->
+    newnode(erstar_bound:unify(Bound, bound(Child)), [Child | Children]).
+
+insert_children(Cs, {_, _, CsWere}, Params = {_, MaxCap, _, _}) when length(Cs) + length(CsWere) > MaxCap ->
+    split_nodes(Cs ++ CsWere, Params);
+
+insert_children(Cs, {_, Bound, CsWere}, _Params) ->
+    NowBound = unify_bounds(Cs, Bound),
+    newnode(NowBound, Cs ++ CsWere).
 
 unify_bounds([], Bound) ->
     Bound;
@@ -127,10 +136,90 @@ unify_bounds([], Bound) ->
 unify_bounds([Node | Rest], Bound) ->
     unify_bounds(Rest, erstar_bound:unify(Bound, bound(Node))).
 
-split_nodes(Nodes, _) ->
-    %% dummy
-    {Part, Rest} = take_part([], Nodes, length(Nodes) div 2),
-    [newnode(Part), newnode(Rest)].
+split_nodes(Nodes, {MinCap, _, _, _}) ->
+    {NodesByLower, NodesByUpper} = choose_axis(Nodes, MinCap),
+    Result0 = choose_split_axis(NodesByLower, MinCap),
+    Result1 = choose_split_axis(NodesByUpper, MinCap),
+    split_nodes_by_distrib(Result0, Result1).
+
+choose_split_axis(Nodes, MinCap) ->
+    G = get_distrib_goodness(overlap, Nodes, MinCap),
+    choose_split_axis(Nodes, MinCap + 1, length(Nodes) - MinCap + 1, MinCap, G).
+
+choose_split_axis(Nodes, M, M, Min, {G, B1, B2}) ->
+    {G, Nodes, Min, B1, B2};
+
+choose_split_axis(Nodes, N, M, MinSoFar, GSoFar = {ValueSoFar, _, _}) ->
+    G = {Value, _, _} = get_distrib_goodness(overlap, Nodes, N),
+    if
+        Value < ValueSoFar ->
+            choose_split_axis(Nodes, N + 1, M, N, G);
+        true ->
+            choose_split_axis(Nodes, N + 1, M, MinSoFar, GSoFar)
+    end.
+
+split_nodes_by_distrib({G0, Nodes, N, B1, B2}, {G1, _, _, _, _}) when G0 < G1 ->
+    {Part, Rest} = take_part([], Nodes, N),
+    [newnode(B1, Part), newnode(B2, Rest)];
+
+split_nodes_by_distrib(_, {_, Nodes, N, B1, B2}) ->
+    {Part, Rest} = take_part([], Nodes, N),
+    [newnode(B1, Part), newnode(B2, Rest)].
+
+choose_axis(Nodes, MinCap) ->
+    {XGoodness, XNodesSorted} = get_axis_goodness(x, Nodes, MinCap),
+    {YGoodness, YNodesSorted} = get_axis_goodness(y, Nodes, MinCap),
+    if
+        XGoodness < YGoodness ->
+            XNodesSorted;
+        true ->
+            YNodesSorted
+    end.
+
+get_axis_goodness(Ax, Nodes, MinCap) ->
+    Limit = length(Nodes) - MinCap + 1,
+    ByLower = lists:sort(fun (N1, N2) -> compare_bound(Ax, l, bound(N1), bound(N2)) end, Nodes),
+    ByUpper = lists:sort(fun (N1, N2) -> compare_bound(Ax, u, bound(N1), bound(N2)) end, Nodes),
+    G0 = sum_distribs_goodness(ByLower, MinCap, Limit, 0),
+    GR = sum_distribs_goodness(ByUpper, MinCap, Limit, G0),
+    {GR, {ByLower, ByUpper}}.
+
+compare_bound(x, l, B1, B2) ->
+    erstar_bound:x1(B1) < erstar_bound:x1(B2);
+
+compare_bound(x, u, B1, B2) ->
+    erstar_bound:x2(B1) < erstar_bound:x2(B2);
+
+compare_bound(y, l, B1, B2) ->
+    erstar_bound:y1(B1) < erstar_bound:y1(B2);
+
+compare_bound(y, u, B1, B2) ->
+    erstar_bound:y2(B1) < erstar_bound:y2(B2).
+
+sum_distribs_goodness(_Nodes, M, M, Acc) ->
+    Acc;
+
+sum_distribs_goodness(Nodes, N, M, Acc) ->
+    {G, _, _} = get_distrib_goodness(margin, Nodes, N),
+    sum_distribs_goodness(Nodes, N + 1, M, Acc + G).
+
+get_distrib_goodness(What, [Node | Rest], N) ->
+    get_distrib_goodness(What, Rest, N - 1, bound(Node), erstar_bound:empty()).
+
+get_distrib_goodness(What, [], _, B1, B2) ->
+    {compute_goodness(What, B1, B2), B1, B2};
+
+get_distrib_goodness(What, [Node | Rest], 0, B1, B2) ->
+    get_distrib_goodness(What, Rest, 0, B1, erstar_bound:unify(B2, bound(Node)));
+
+get_distrib_goodness(What, [Node | Rest], N, B1, B2) ->
+    get_distrib_goodness(What, Rest, N - 1, erstar_bound:unify(B1, bound(Node)), B2).
+
+compute_goodness(margin, B1, B2) ->
+    erstar_bound:margin(B1) + erstar_bound:margin(B2);
+
+compute_goodness(overlap, B1, B2) ->
+    erstar_bound:overlap(B1, B2).
 
 take_part(Part, Rest, 0) ->
     {Part, Rest};
