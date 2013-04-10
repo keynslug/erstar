@@ -10,7 +10,11 @@
     instance/1,
     insert/3,
     fold/3,
-    foldwide/3
+    foldwide/3,
+    walk/2,
+    at/3,
+    locate/2,
+    locate/3
 ]).
 
 %%
@@ -80,6 +84,45 @@ fold(Fun, Acc, {?MODULE, _, Root}) ->
 
 foldwide(Fun, Acc, {?MODULE, _, Root}) ->
     fold_wide(Fun, Acc, 1, Root).
+
+%%
+
+-spec walk(WalkFun, tree()) -> [treeleaf()] when
+    WalkFun :: fun((node | leaf, erstar_bound:bound()) -> boolean()).
+
+walk(WalkFun, {?MODULE, _, Root}) ->
+    walk_node(WalkFun, [], Root).
+
+%%
+
+-spec at(number(), number(), tree()) -> [treeleaf()].
+
+at(X, Y, RStar) ->
+    locate(erstar_bound:new(X, Y), RStar).
+
+-spec locate(erstar_bound:bound(), tree()) -> [treeleaf()].
+
+locate(Where, RStar) ->
+    locate(enclose, Where, RStar).
+
+-spec locate(enclose | overlap, erstar_bound:bound(), tree()) -> [treeleaf()].
+
+locate(enclose, Where, RStar) ->
+    walk(fun (Type, Bound) -> does_enclose(Type, Bound, Where) end, RStar);
+
+locate(intersect, Where, RStar) ->
+    walk(fun (Type, Bound) -> does_intersect(Type, Bound, Where) end, RStar).
+
+%%
+
+does_enclose(node, Bound, Location) ->
+    erstar_bound:intersect(Location, Bound) =/= empty;
+
+does_enclose(leaf, Bound, Location) ->
+    erstar_bound:unify(Location, Bound) =:= Location.
+
+does_intersect(_Any, Bound, Location) ->
+    erstar_bound:intersect(Location, Bound) =/= empty.
 
 %%
 
@@ -295,6 +338,26 @@ fold_node(Fun, Acc, Level, {Bound, Data}) ->
 
 %%
 
+walk_node(_Walk, Acc, []) ->
+    Acc;
+
+walk_node(Walk, Acc, [Node | Rest]) ->
+    walk_node(Walk, walk_node(Walk, Acc, Node), Rest);
+
+walk_node(Walk, Acc, Node) ->
+    walk_node(Walk(nodetype(Node), bound(Node)), Walk, Acc, Node).
+
+walk_node(true, Walk, Acc, {_, _, Children}) ->
+    walk_node(Walk, Acc, Children);
+
+walk_node(true, _Walk, Acc, Leaf) ->
+    [Leaf | Acc];
+
+walk_node(false, _Walk, Acc, _Any) ->
+    Acc.
+
+%%
+
 newnode() ->
     {node, erstar_bound:empty(), []}.
 
@@ -306,6 +369,12 @@ newnode(Bound, Children) ->
 
 newleaf(Bound, Data) ->
     {Bound, Data}.
+
+nodetype({_, _, _}) ->
+    node;
+
+nodetype({_, _}) ->
+    leaf.
 
 bound({Bound, _}) ->
     Bound;
