@@ -1,0 +1,13 @@
+{
+    "folders":
+    [
+        {
+            "path": "/home/keynslug/workspace/erstar",
+            "folder_exclude_patterns": [".eunit", "logs"],
+            "file_exclude_patterns": ["*.beam", "*.app", ".tags*"]
+        }
+    ],
+    "settings": {
+        "ctags_command": "ctags --languages=erlang --erlang-kinds=-dr --exclude=test -R -f .tags"
+    }
+}

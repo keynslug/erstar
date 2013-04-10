@@ -1,0 +1,9 @@
+{application, erstar, [
+    {description, "Erlang R*-Tree implementation"},
+    {vsn, "1"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]}
+]}.
