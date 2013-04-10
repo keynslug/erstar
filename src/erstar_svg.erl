@@ -37,7 +37,7 @@ render_prim({bound, Bound, Level}) ->
     HC = max(Eps, H),
     ExtentsList = io_lib:format("x=\"~p\" y=\"~p\" width=\"~p\" height=\"~p\"", [X, Y, WC, HC]),
     Extents = iolist_to_binary(ExtentsList),
-    Style = <<"fill:", CB/binary, ";fill-opacity:0.2; stroke:", CB/binary, ";stroke-opacity:0.8;">>,
+    Style = <<"fill:", CB/binary, ";fill-opacity:0.1; stroke:", CB/binary, ";stroke-opacity:0.8;">>,
     <<"<rect ", Extents/binary, " style=\"", Style/binary, "\"/>", $\n>>;
 
 render_prim({point, {X, Y}}) ->
