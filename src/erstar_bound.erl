@@ -11,6 +11,7 @@
     new/4,
     lowerleft/1,
     upperright/1,
+    center/1,
     x1/1,
     y1/1,
     x2/1,
@@ -73,6 +74,14 @@ lowerleft({X, Y, _, _}) ->
 
 upperright({X, Y, W, H}) ->
     {X + W, Y + H}.
+
+-spec center(bound()) -> {number(), number()}.
+
+center({X, Y, 0, 0}) ->
+    {X, Y};
+
+center({X, Y, W, H}) ->
+    {X + W / 2.0, Y + H / 2.0}.
 
 -spec dimensions(bound()) -> {number(), number()}.
 
