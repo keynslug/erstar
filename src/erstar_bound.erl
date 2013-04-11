@@ -143,11 +143,23 @@ intersect(X1, L1, X0, L0) ->
 
 -spec overlap(bound(), bound()) -> number().
 
-overlap(B0, B1) ->
-    overlap(intersect(B0, B1)).
+overlap({X0, Y0, W0, H0}, {X1, Y1, W1, H1}) ->
+    W = overlap(X0, W0, X1, W1),
+    if
+        W =< 0 ->
+            0;
+        true ->
+            H = overlap(Y0, H0, Y1, H1),
+            if
+                H =< 0 ->
+                    0;
+                true ->
+                    W * H
+            end
+    end.
 
-overlap(empty) ->
-    0;
+overlap(X0, L0, X1, L1) when X0 < X1 ->
+    min(L1, L0 - (X1 - X0));
 
-overlap(B) ->
-    area(B).
+overlap(X1, L1, X0, L0) ->
+    min(L1, L0 - (X1 - X0)).
