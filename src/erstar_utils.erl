@@ -32,4 +32,9 @@ render_entry(node, Bound, _, Level, Acc) ->
     [{bound, Bound, Level} | Acc];
 
 render_entry(leaf, Bound, _, _, Acc) ->
-    [{point, erstar_bound:lowerleft(Bound)} | Acc].
+    case erstar_bound:dimensions(Bound) of
+        {0, 0} ->
+            [{point, erstar_bound:lowerleft(Bound)} | Acc];
+        _ ->
+            [{rect, Bound} | Acc]
+    end.

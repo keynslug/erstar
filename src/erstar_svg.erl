@@ -32,13 +32,22 @@ render_prim({bound, Bound, Level}) ->
     {X, Y} = erstar_bound:lowerleft(Bound),
     CB = get_level_color(Level),
     {W, H} = erstar_bound:dimensions(Bound),
-    Eps = 1.0e-16,
-    WC = max(Eps, W),
-    HC = max(Eps, H),
+    WC = max(eps(), W),
+    HC = max(eps(), H),
     ExtentsList = io_lib:format("x=\"~p\" y=\"~p\" width=\"~p\" height=\"~p\"", [X, Y, WC, HC]),
     Extents = iolist_to_binary(ExtentsList),
     Style = <<"fill:", CB/binary, ";fill-opacity:0.1; stroke:", CB/binary, ";stroke-opacity:0.8;">>,
     <<"<rect ", Extents/binary, " style=\"", Style/binary, "\"/>", $\n>>;
+
+render_prim({rect, Bound}) ->
+    {X, Y} = erstar_bound:lowerleft(Bound),
+    {W, H} = erstar_bound:dimensions(Bound),
+    WC = max(eps(), W),
+    HC = max(eps(), H),
+    ExtentsList = io_lib:format("x=\"~p\" y=\"~p\" width=\"~p\" height=\"~p\"", [X, Y, WC, HC]),
+    Extents = iolist_to_binary(ExtentsList),
+    Style = <<"fill:#f00;fill-opacity:0.4;stroke:#f00;stroke-width:2;">>,
+    <<"<rect ", Extents/binary, " rx=\"2\" style=\"", Style/binary, "\"/>", $\n>>;
 
 render_prim({point, {X, Y}}) ->
     Coords = iolist_to_binary(io_lib:format("cx=\"~p\" cy=\"~p\"", [X, Y])),
@@ -47,6 +56,9 @@ render_prim({point, {X, Y}}) ->
 %%
 
 get_prim_extent({bound, Bound, _}) ->
+    Bound;
+
+get_prim_extent({rect, Bound}) ->
     Bound;
 
 get_prim_extent({point, {X, Y}}) ->
@@ -87,3 +99,8 @@ get_level_color(6) ->
 
 get_level_color(_) ->
     <<"#333">>.
+
+%%
+
+eps() ->
+    1.0e-16.
