@@ -12,10 +12,14 @@
 
 %%
 
+-spec total_overlap_by_level(erstar:tree()) -> [{pos_integer(), number()}].
+
 total_overlap_by_level(RTree) ->
     BoundsByLevel = erstar:fold(fun bounds_by_level/5, dict:new(), RTree),
     OverlapByLevel = overlap_by_level(BoundsByLevel),
     OverlapByLevel.
+
+-spec total_area_by_level(erstar:tree()) -> [{pos_integer(), number()}].
 
 total_area_by_level(RTree) ->
     BoundsByLevel = erstar:fold(fun bounds_by_level/5, dict:new(), RTree),
