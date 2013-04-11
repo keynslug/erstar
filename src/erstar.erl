@@ -48,7 +48,7 @@ new(MinCap, MaxCap, ChooseCutout, ReinsertCount) when
     is_integer(MinCap), MinCap > 1,
     is_integer(MaxCap), MaxCap >= 2 * MinCap,
     is_integer(ChooseCutout), ChooseCutout > 0,
-    is_integer(ReinsertCount), ReinsertCount > 0, ReinsertCount < MaxCap ->
+    is_integer(ReinsertCount), ReinsertCount >= 0, ReinsertCount < MaxCap ->
     {?MODULE, {MinCap, MaxCap, ChooseCutout, ReinsertCount}, newnode()}.
 
 %%
@@ -66,14 +66,14 @@ instance(_) ->
 -spec insert(erstar_bound:bound(), any(), tree()) -> tree().
 
 insert(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
-    Root = insert_leaf(newleaf(Bound, Data), Root0, Params),
-    update_root(RStar, Root).
+    Root = insert_leaf(newleaf(Bound, Data), Root0, 1, Params),
+    update_root(RStar, Root, Params).
 
 -spec insert([treeleaf()], tree()) -> tree().
 
 insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_bulk(Leafs, Root0, Params),
-    update_root(RStar, Root).
+    update_root(RStar, Root, Params).
 
 %%
 
@@ -188,14 +188,17 @@ always_true(_, _) ->
 
 %%
 
-maybe_reroot(Roots) when is_list(Roots) ->
+maybe_reroot({reinsert, Nodes, Root}, Params) ->
+    insert_bulk(Nodes, Root, setelement(4, Params, 0));
+
+maybe_reroot(Roots, _Params) when is_list(Roots) ->
     newnode(Roots);
 
-maybe_reroot(Root) ->
+maybe_reroot(Root, _Params) ->
     Root.
 
-update_root(RStar, Root) ->
-    setelement(3, RStar, maybe_reroot(Root)).
+update_root(RStar, Root, Params) ->
+    setelement(3, RStar, maybe_reroot(Root, Params)).
 
 %%
 
@@ -203,16 +206,16 @@ insert_bulk([], Root, _Params) ->
     Root;
 
 insert_bulk([Leaf | Rest], Root, Params) ->
-    insert_bulk(Rest, maybe_reroot(insert_leaf(Leaf, Root, Params)), Params).
+    insert_bulk(Rest, maybe_reroot(insert_leaf(Leaf, Root, 1, Params), Params), Params).
 
-insert_leaf(Leaf, Node0, Params) ->
+insert_leaf(Leaf, Node0, Level, Params) ->
     case has_leaves(Node0) of
         true ->
-            insert_child(Leaf, Node0, Params);
+            insert_child(Leaf, Node0, Level, Params);
         _False ->
             {SubNode0, Node} = pick_subnode(bound(Leaf), Node0, Params),
-            SubNode = insert_leaf(Leaf, SubNode0, Params),
-            insert_child(SubNode, Node, Params)
+            SubNode = insert_leaf(Leaf, SubNode0, Level + 1, Params),
+            insert_child(SubNode, Node, Level, Params)
     end.
 
 pick_subnode(Against, {_, Bound, Children}, Params) ->
@@ -234,19 +237,22 @@ pick_node(true, Bound, Nodes, _Params) ->
 pick_node(_False, Bound, Nodes, _Params) ->
     needs_least(area, Bound, Nodes).
 
-insert_child(List, Node, Params) when is_list(List) ->
-    insert_children(List, Node, Params);
+insert_child({reinsert, What, SubNode}, Node, Level, Params) ->
+    {reinsert, What, insert_child(SubNode, Node, Level, Params)};
 
-insert_child(Child, {_, _, Children}, Params = {_, MaxCap, _, _}) when length(Children) + 1 > MaxCap ->
-    split_nodes([Child | Children], Params);
+insert_child(List, Node, Level, Params) when is_list(List) ->
+    insert_children(List, Node, Level, Params);
 
-insert_child(Child, {_, Bound, Children}, _Params) ->
+insert_child(Child, {_, BoundWas, Children}, Level, Params = {_, MaxCap, _, _}) when length(Children) + 1 > MaxCap ->
+    split_nodes([Child], BoundWas, Children, Level, Params);
+
+insert_child(Child, {_, Bound, Children}, _Level, _Params) ->
     newnode(erstar_bound:unify(Bound, bound(Child)), [Child | Children]).
 
-insert_children(Cs, {_, _, CsWere}, Params = {_, MaxCap, _, _}) when length(Cs) + length(CsWere) > MaxCap ->
-    split_nodes(Cs ++ CsWere, Params);
+insert_children(Cs, {_, BoundWas, CsWere}, Level, Params = {_, MaxCap, _, _}) when length(Cs) + length(CsWere) > MaxCap ->
+    split_nodes(Cs, BoundWas, CsWere, Level, Params);
 
-insert_children(Cs, {_, Bound, CsWere}, _Params) ->
+insert_children(Cs, {_, Bound, CsWere}, _Level, _Params) ->
     NowBound = unify_bounds(Cs, Bound),
     newnode(NowBound, Cs ++ CsWere).
 
@@ -256,11 +262,28 @@ unify_bounds([], Bound) ->
 unify_bounds([Node | Rest], Bound) ->
     unify_bounds(Rest, erstar_bound:unify(Bound, bound(Node))).
 
-split_nodes(Nodes, {MinCap, _, _, _}) ->
-    {NodesByLower, NodesByUpper} = choose_axis(Nodes, MinCap),
+split_nodes(Extra, BoundWas, Nodes, Level, {_, _, _, ReinsertCount}) when Level > 1, ReinsertCount > 0 ->
+    Bound = unify_bounds(Extra, BoundWas),
+    BoundCenter = erstar_bound:center(Bound),
+    SortedNodes = lists:sort(fun (N1, N2) -> not compare_distance(N1, N2, BoundCenter) end, Extra ++ Nodes),
+    {DistantNodes, Rest} = take_part([], SortedNodes, ReinsertCount),
+    {reinsert, DistantNodes, newnode(Rest)};
+
+split_nodes(Extra, _Bound, Nodes, _Level, {MinCap, _, _, _}) ->
+    {NodesByLower, NodesByUpper} = choose_axis(Extra ++ Nodes, MinCap),
     Result0 = choose_split_axis(NodesByLower, MinCap),
     Result1 = choose_split_axis(NodesByUpper, MinCap),
     split_nodes_by_distrib(Result0, Result1).
+
+compare_distance(N1, N2, Center) ->
+    C1 = erstar_bound:center(bound(N1)),
+    C2 = erstar_bound:center(bound(N2)),
+    distance2(C1, Center) < distance2(C2, Center).
+
+distance2({X1, Y1}, {X2, Y2}) ->
+    DX = X1 - X2,
+    DY = Y1 - Y2,
+    DX * DX + DY * DY.
 
 choose_split_axis(Nodes, MinCap) ->
     G = get_distrib_goodness(overlap, Nodes, MinCap),
