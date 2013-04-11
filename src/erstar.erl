@@ -392,10 +392,16 @@ compute_criteria(area, Bound, Node, _Nodes) ->
 
 compute_criteria(overlap, Bound, Node, Nodes) ->
     NodeBound = bound(Node),
-    OverlapWas = lists:sum([erstar_bound:overlap(NodeBound, bound(N)) || N <- Nodes, N =/= Node]),
+    OverlapWas = total_overlap(0, NodeBound, Nodes),
     NowBound = erstar_bound:unify(NodeBound, Bound),
-    OverlapNow = lists:sum([erstar_bound:overlap(NowBound, bound(N)) || N <- Nodes, N =/= Node]),
+    OverlapNow = total_overlap(0, NowBound, Nodes),
     OverlapNow - OverlapWas.
+
+total_overlap(Acc, _Bound, []) ->
+    Acc;
+
+total_overlap(Acc, Bound, [Node | Rest]) ->
+    total_overlap(Acc + erstar_bound:overlap(Bound, bound(Node)), Bound, Rest).
 
 compute_area_d(Bound, Node) ->
     NodeBound = bound(Node),
