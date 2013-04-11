@@ -13,6 +13,8 @@
     fold/3,
     foldwide/3,
     walk/2,
+    leaves/1,
+    size/1,
     at/3,
     around/4,
     locate/2,
@@ -101,6 +103,20 @@ walk(WalkFun, {?MODULE, _, Root}) ->
 
 %%
 
+-spec leaves(tree()) -> [treeleaf()].
+
+leaves(RTree) ->
+    walk(fun always_true/2, RTree).
+
+%%
+
+-spec size(tree()) -> non_neg_integer().
+
+size({?MODULE, _, Root}) ->
+    count_leaves(0, Root).
+
+%%
+
 -spec at(number(), number(), tree()) -> [treeleaf()].
 
 at(X, Y, RStar) ->
@@ -166,6 +182,9 @@ closer_than(leaf, Bound, RX, RY, _, Dist2) ->
     DX = CX - RX,
     DY = CY - RY,
     (DX * DX + DY * DY) =< Dist2.
+
+always_true(_, _) ->
+    true.
 
 %%
 
@@ -396,6 +415,23 @@ fold_node(Fun, Acc, Level, {node, Bound, Children}) ->
 
 fold_node(Fun, Acc, Level, {Bound, Data}) ->
     Fun(leaf, Bound, Data, Level, Acc).
+
+%%
+
+count_leaves(Acc, []) ->
+    Acc;
+
+count_leaves(Acc, [Node | Rest]) ->
+    count_leaves(count_leaves(Acc, Node), Rest);
+
+count_leaves(Acc, Node) ->
+    count_leaves(has_leaves(Node), Acc, Node).
+
+count_leaves(true, Acc, {_, _, Children}) ->
+    Acc + length(Children);
+
+count_leaves(false, Acc, {_, _, Children}) ->
+    count_leaves(Acc, Children).
 
 %%
 
