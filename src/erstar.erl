@@ -27,8 +27,6 @@
 
 -export_type([tree/0]).
 
--compile([export_all]).
-
 %%
 
 -spec new(pos_integer()) -> tree().
