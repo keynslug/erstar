@@ -49,6 +49,10 @@ render_prim({rect, Bound}) ->
     Style = <<"fill:#f00;fill-opacity:0.4;stroke:#f00;stroke-width:2;">>,
     <<"<rect ", Extents/binary, " rx=\"2\" style=\"", Style/binary, "\"/>", $\n>>;
 
+render_prim({circle, {X, Y}, R}) ->
+    Coords = iolist_to_binary(io_lib:format("cx=\"~p\" cy=\"~p\" r=\"~p\"", [X, Y, R])),
+    <<"<circle ", Coords/binary, " style=\"stroke:#f00;fill:#f00;fill-opacity:0.4;\"/>", $\n>>;
+
 render_prim({point, {X, Y}}) ->
     Coords = iolist_to_binary(io_lib:format("cx=\"~p\" cy=\"~p\"", [X, Y])),
     <<"<circle ", Coords/binary, " r=\"1\" style=\"stroke:#f00; fill:#f00;\"/>", $\n>>.
@@ -60,6 +64,9 @@ get_prim_extent({bound, Bound, _}) ->
 
 get_prim_extent({rect, Bound}) ->
     Bound;
+
+get_prim_extent({circle, {X, Y}, R}) ->
+    erstar_bound:new(X - R, Y - R, X + R, Y + R);
 
 get_prim_extent({point, {X, Y}}) ->
     erstar_bound:new(X, Y).
