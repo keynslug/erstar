@@ -12,13 +12,13 @@
 
 %%
 
--spec render(svg, erstar:tree()) -> iolist().
+-spec render(svg, erstar:rtree()) -> iolist().
 
 render(To, RStar) ->
     Renderables = erstar:foldwide(fun render_entry/5, [], RStar),
     render_to(To, Renderables).
 
--spec render_to_file(string(), svg, erstar:tree()) -> ok | {error, atom()}.
+-spec render_to_file(string(), svg, erstar:rtree()) -> ok | {error, atom()}.
 
 render_to_file(Filename, To, RStar) ->
     file:write_file(Filename, render(To, RStar)).

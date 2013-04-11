@@ -26,23 +26,24 @@
 -type treeleaf() :: {erstar_bound:bound(), any()}.
 -type treenode() :: {node, empty | erstar_bound:bound(), [treenode() | treeleaf()]}.
 
--type tree() :: {?MODULE, tuple(), treenode()}.
+-type rtree() ::
+    {?MODULE, {pos_integer(), pos_integer(), pos_integer(), non_neg_integer()}, treenode()}.
 
--export_type([tree/0]).
+-export_type([rtree/0]).
 
 %%
 
--spec new(pos_integer()) -> tree().
+-spec new(pos_integer()) -> rtree().
 
 new(MaxCap) ->
     new(trunc(0.4 * MaxCap), MaxCap).
 
--spec new(pos_integer(), pos_integer()) -> tree().
+-spec new(pos_integer(), pos_integer()) -> rtree().
 
 new(MinCap, MaxCap) ->
     new(MinCap, MaxCap, 32, trunc(0.3 * MaxCap)).
 
--spec new(pos_integer(), pos_integer(), pos_integer(), pos_integer()) -> tree().
+-spec new(pos_integer(), pos_integer(), pos_integer(), pos_integer()) -> rtree().
 
 new(MinCap, MaxCap, ChooseCutout, ReinsertCount) when
     is_integer(MinCap), MinCap > 1,
@@ -63,13 +64,13 @@ instance(_) ->
 
 %%
 
--spec insert(erstar_bound:bound(), any(), tree()) -> tree().
+-spec insert(erstar_bound:bound(), any(), rtree()) -> rtree().
 
 insert(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_leaf(newleaf(Bound, Data), Root0, 1, Params),
     update_root(RStar, Root, Params).
 
--spec insert([treeleaf()], tree()) -> tree().
+-spec insert([treeleaf()], rtree()) -> rtree().
 
 insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_bulk(Leafs, Root0, Params),
@@ -77,7 +78,7 @@ insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
 
 %%
 
--spec fold(FoldFun, Acc, tree()) -> Acc when
+-spec fold(FoldFun, Acc, rtree()) -> Acc when
     FoldFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Acc),
     Acc :: any().
 
@@ -86,7 +87,7 @@ fold(Fun, Acc, {?MODULE, _, Root}) ->
 
 %%
 
--spec foldwide(FoldFun, Acc, tree()) -> Acc when
+-spec foldwide(FoldFun, Acc, rtree()) -> Acc when
     FoldFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Acc),
     Acc :: any().
 
@@ -95,7 +96,7 @@ foldwide(Fun, Acc, {?MODULE, _, Root}) ->
 
 %%
 
--spec walk(WalkFun, tree()) -> [treeleaf()] when
+-spec walk(WalkFun, rtree()) -> [treeleaf()] when
     WalkFun :: fun((node | leaf, erstar_bound:bound()) -> boolean()).
 
 walk(WalkFun, {?MODULE, _, Root}) ->
@@ -103,28 +104,28 @@ walk(WalkFun, {?MODULE, _, Root}) ->
 
 %%
 
--spec leaves(tree()) -> [treeleaf()].
+-spec leaves(rtree()) -> [treeleaf()].
 
 leaves(RTree) ->
     walk(fun always_true/2, RTree).
 
 %%
 
--spec size(tree()) -> non_neg_integer().
+-spec size(rtree()) -> non_neg_integer().
 
 size({?MODULE, _, Root}) ->
     count_leaves(0, Root).
 
 %%
 
--spec at(number(), number(), tree()) -> [treeleaf()].
+-spec at(number(), number(), rtree()) -> [treeleaf()].
 
 at(X, Y, RStar) ->
     locate(intersect, erstar_bound:new(X, Y), RStar).
 
 %%
 
--spec around(number(), number(), number(), tree()) -> [treeleaf()].
+-spec around(number(), number(), number(), rtree()) -> [treeleaf()].
 
 around(X, Y, CloserThan, RStar) ->
     Dist2 = CloserThan * CloserThan,
@@ -132,12 +133,12 @@ around(X, Y, CloserThan, RStar) ->
 
 %%
 
--spec locate(erstar_bound:bound(), tree()) -> [treeleaf()].
+-spec locate(erstar_bound:bound(), rtree()) -> [treeleaf()].
 
 locate(Where, RStar) ->
     locate(enclose, Where, RStar).
 
--spec locate(enclose | overlap, erstar_bound:bound(), tree()) -> [treeleaf()].
+-spec locate(enclose | intersect, erstar_bound:bound(), rtree()) -> [treeleaf()].
 
 locate(enclose, Where, RStar) ->
     walk(fun (Type, Bound) -> does_enclose(Type, Bound, Where) end, RStar);
