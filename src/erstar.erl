@@ -98,7 +98,7 @@ walk(WalkFun, {?MODULE, _, Root}) ->
 -spec at(number(), number(), tree()) -> [treeleaf()].
 
 at(X, Y, RStar) ->
-    locate(erstar_bound:new(X, Y), RStar).
+    locate(intersect, erstar_bound:new(X, Y), RStar).
 
 -spec locate(erstar_bound:bound(), tree()) -> [treeleaf()].
 
