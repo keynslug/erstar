@@ -9,6 +9,7 @@
     new/4,
     instance/1,
     insert/3,
+    insert/2,
     fold/3,
     foldwide/3,
     walk/2,
@@ -64,6 +65,12 @@ instance(_) ->
 
 insert(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_leaf(newleaf(Bound, Data), Root0, Params),
+    update_root(RStar, Root).
+
+-spec insert([treeleaf()], tree()) -> tree().
+
+insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
+    Root = insert_bulk(Leafs, Root0, Params),
     update_root(RStar, Root).
 
 %%
@@ -162,35 +169,50 @@ closer_than(leaf, Bound, RX, RY, _, Dist2) ->
 
 %%
 
-update_root(RStar, Roots) when is_list(Roots) ->
-    update_root(RStar, newnode(Roots));
+maybe_reroot(Roots) when is_list(Roots) ->
+    newnode(Roots);
+
+maybe_reroot(Root) ->
+    Root.
 
 update_root(RStar, Root) ->
-    setelement(3, RStar, Root).
+    setelement(3, RStar, maybe_reroot(Root)).
 
 %%
+
+insert_bulk([], Root, _Params) ->
+    Root;
+
+insert_bulk([Leaf | Rest], Root, Params) ->
+    insert_bulk(Rest, maybe_reroot(insert_leaf(Leaf, Root, Params)), Params).
 
 insert_leaf(Leaf, Node0, Params) ->
     case has_leaves(Node0) of
         true ->
             insert_child(Leaf, Node0, Params);
         _False ->
-            {SubNode0, Node} = pick_subnode(bound(Leaf), Node0),
+            {SubNode0, Node} = pick_subnode(bound(Leaf), Node0, Params),
             SubNode = insert_leaf(Leaf, SubNode0, Params),
             insert_child(SubNode, Node, Params)
     end.
 
-pick_subnode(Against, {_, Bound, Children}) ->
-    {Picked, Rest} = pick_node(Against, Children),
-    {Picked, newnode(Bound, Rest)}.
+pick_subnode(Against, {_, Bound, Children}, Params) ->
+    Picked = pick_node(Against, Children, Params),
+    {Picked, newnode(Bound, Children -- [Picked])}.
 
-pick_node(Bound, Nodes = [Node | _]) ->
-    pick_node(has_leaves(Node), Bound, Nodes).
+pick_node(Bound, Nodes = [Node | _], Params) ->
+    pick_node(has_leaves(Node), Bound, Nodes, Params).
 
-pick_node(true, Bound, Nodes) ->
+pick_node(true, Bound, Nodes, {_, _, ChooseCutout, _}) when length(Nodes) > ChooseCutout ->
+    Compare = fun (N1, N2) -> compute_area_d(Bound, N1) < compute_area_d(Bound, N2) end,
+    SortedNodes = lists:sort(Compare, Nodes),
+    {ClosestNodes, _} = take_part([], SortedNodes, ChooseCutout),
+    needs_least(overlap, Bound, ClosestNodes);
+
+pick_node(true, Bound, Nodes, _Params) ->
     needs_least(overlap, Bound, Nodes);
 
-pick_node(_False, Bound, Nodes) ->
+pick_node(_False, Bound, Nodes, _Params) ->
     needs_least(area, Bound, Nodes).
 
 insert_child(List, Node, Params) when is_list(List) ->
@@ -311,8 +333,8 @@ take_part(Part, [Node | Rest], N) ->
 needs_least(Criteria, Bound, Nodes = [Node | Rest]) ->
     needs_least(Criteria, Nodes, compute_criteria(Criteria, Bound, Node, Nodes), Node, Bound, Rest).
 
-needs_least(_, Nodes, _Least, Node, _Bound, []) ->
-    {Node, Nodes -- [Node]};
+needs_least(_, _Nodes, _Least, Node, _Bound, []) ->
+    Node;
 
 needs_least(Criteria, Nodes, LeastSoFar, NodeSoFar, Bound, [Node | Rest]) ->
     case compute_criteria(Criteria, Bound, Node, Nodes) of
@@ -323,8 +345,7 @@ needs_least(Criteria, Nodes, LeastSoFar, NodeSoFar, Bound, [Node | Rest]) ->
     end.
 
 compute_criteria(area, Bound, Node, _Nodes) ->
-    NodeBound = bound(Node),
-    erstar_bound:area(erstar_bound:unify(NodeBound, Bound)) - erstar_bound:area(NodeBound);
+    compute_area_d(Bound, Node);
 
 compute_criteria(overlap, Bound, Node, Nodes) ->
     NodeBound = bound(Node),
@@ -332,6 +353,10 @@ compute_criteria(overlap, Bound, Node, Nodes) ->
     NowBound = erstar_bound:unify(NodeBound, Bound),
     OverlapNow = lists:sum([erstar_bound:overlap(NowBound, bound(N)) || N <- Nodes, N =/= Node]),
     OverlapNow - OverlapWas.
+
+compute_area_d(Bound, Node) ->
+    NodeBound = bound(Node),
+    erstar_bound:area(erstar_bound:unify(NodeBound, Bound)) - erstar_bound:area(NodeBound).
 
 %%
 
