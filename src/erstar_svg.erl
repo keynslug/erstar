@@ -56,9 +56,10 @@ get_prim_extent({point, {X, Y}}) ->
 
 header(X, Y, W, H) ->
     ViewBox = iolist_to_binary(io_lib:format("~p ~p ~p ~p", [X, Y, W, H])),
+    Dims = iolist_to_binary(io_lib:format("width=\"~p\" height=\"~p\"", [W, H])),
     <<
         "<?xml version=\"1.0\" standalone=\"no\" ?>", $\n,
-        "<svg viewBox=\"", ViewBox/binary, "\" xmlns=\"http://www.w3.org/2000/svg\">", $\n
+        "<svg ", Dims/binary, " viewBox=\"", ViewBox/binary, "\" xmlns=\"http://www.w3.org/2000/svg\">", $\n
     >>.
 
 footer() ->
