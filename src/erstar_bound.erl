@@ -122,12 +122,17 @@ unify(X0, L0, X1, L1) ->
 
 intersect({X0, Y0, W0, H0}, {X1, Y1, W1, H1}) ->
     {X, W} = intersect(X0, W0, X1, W1),
-    {Y, H} = intersect(Y0, H0, Y1, H1),
     if
-        W < 0 -> empty;
-        H < 0 -> empty;
+        W < 0 ->
+            empty;
         true ->
-            {X, Y, W, H}
+            {Y, H} = intersect(Y0, H0, Y1, H1),
+            if
+                H < 0 ->
+                    empty;
+                true ->
+                    {X, Y, W, H}
+            end
     end.
 
 intersect(X0, L0, X1, L1) when X1 >= X0 ->
