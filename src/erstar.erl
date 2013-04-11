@@ -418,12 +418,6 @@ bound({Bound, _}) ->
 bound({_, Bound, _}) ->
     Bound.
 
-children({_, _, Children}) ->
-    Children.
-
-data({_, Data}) ->
-    Data.
-
 has_leaves({_, _, []}) ->
     true;
 
