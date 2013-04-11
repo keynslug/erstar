@@ -13,6 +13,7 @@
     foldwide/3,
     walk/2,
     at/3,
+    around/4,
     locate/2,
     locate/3
 ]).
@@ -100,6 +101,16 @@ walk(WalkFun, {?MODULE, _, Root}) ->
 at(X, Y, RStar) ->
     locate(intersect, erstar_bound:new(X, Y), RStar).
 
+%%
+
+-spec around(number(), number(), number(), tree()) -> [treeleaf()].
+
+around(X, Y, CloserThan, RStar) ->
+    Dist2 = CloserThan * CloserThan,
+    walk(fun (Type, Bound) -> closer_than(Type, Bound, X, Y, CloserThan, Dist2) end, RStar).
+
+%%
+
 -spec locate(erstar_bound:bound(), tree()) -> [treeleaf()].
 
 locate(Where, RStar) ->
@@ -123,6 +134,33 @@ does_enclose(leaf, Bound, Location) ->
 
 does_intersect(_Any, Bound, Location) ->
     erstar_bound:intersect(Location, Bound) =/= empty.
+
+closer_than(node, {X, Y, W, H}, RX, RY, Dist, Dist2) ->
+    HW = W / 2,
+    HH = H / 2,
+    DX = abs(X + HW - RX),
+    DY = abs(Y + HH - RY),
+    if
+        DX > HW + Dist ->
+            false;
+        DY > HH + Dist ->
+            false;
+        DX =< HW ->
+            true;
+        DY =< HH ->
+            true;
+        true ->
+            DCX = DX - HW,
+            DCY = DY - HH,
+            DC2 = DCX * DCX + DCY * DCY,
+            DC2 =< Dist2
+    end;
+
+closer_than(leaf, Bound, RX, RY, _, Dist2) ->
+    {CX, CY} = erstar_bound:center(Bound),
+    DX = CX - RX,
+    DY = CY - RY,
+    (DX * DX + DY * DY) =< Dist2.
 
 %%
 
