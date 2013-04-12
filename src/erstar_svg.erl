@@ -66,7 +66,7 @@ get_prim_extent({rect, Bound}) ->
     Bound;
 
 get_prim_extent({circle, {X, Y}, R}) ->
-    erstar_bound:new(X - R, Y - R, X + R, Y + R);
+    erstar_bound:new(X - R, Y - R, R * 2, R * 2);
 
 get_prim_extent({point, {X, Y}}) ->
     erstar_bound:new(X, Y).
