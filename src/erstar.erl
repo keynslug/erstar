@@ -266,7 +266,7 @@ unify_bounds([Node | Rest], Bound) ->
 split_nodes(Extra, BoundWas, Nodes, Level, {_, _, _, ReinsertCount}) when Level > 1, ReinsertCount > 0 ->
     Bound = unify_bounds(Extra, BoundWas),
     BoundCenter = erstar_bound:center(Bound),
-    SortedNodes = lists:sort(fun (N1, N2) -> not compare_distance(N1, N2, BoundCenter) end, Extra ++ Nodes),
+    SortedNodes = lists:sort(fun (N1, N2) -> compare_distance(N1, N2, BoundCenter) end, Extra ++ Nodes),
     {DistantNodes, Rest} = take_part([], SortedNodes, ReinsertCount),
     {reinsert, DistantNodes, newnode(Rest)};
 
@@ -279,7 +279,7 @@ split_nodes(Extra, _Bound, Nodes, _Level, {MinCap, _, _, _}) ->
 compare_distance(N1, N2, Center) ->
     C1 = erstar_bound:center(bound(N1)),
     C2 = erstar_bound:center(bound(N2)),
-    distance2(C1, Center) < distance2(C2, Center).
+    distance2(C1, Center) > distance2(C2, Center).
 
 distance2({X1, Y1}, {X2, Y2}) ->
     DX = X1 - X2,
@@ -322,22 +322,22 @@ choose_axis(Nodes, MinCap) ->
 
 get_axis_goodness(Ax, Nodes, MinCap) ->
     Limit = length(Nodes) - MinCap + 1,
-    ByLower = lists:sort(fun (N1, N2) -> compare_bound(Ax, l, bound(N1), bound(N2)) end, Nodes),
-    ByUpper = lists:sort(fun (N1, N2) -> compare_bound(Ax, u, bound(N1), bound(N2)) end, Nodes),
+    ByLower = lists:sort(fun (N1, N2) -> compare_bound_l(Ax, bound(N1), bound(N2)) end, Nodes),
+    ByUpper = lists:sort(fun (N1, N2) -> compare_bound_u(Ax, bound(N1), bound(N2)) end, Nodes),
     G0 = sum_distribs_goodness(ByLower, MinCap, Limit, 0),
     GR = sum_distribs_goodness(ByUpper, MinCap, Limit, G0),
     {GR, {ByLower, ByUpper}}.
 
-compare_bound(x, l, B1, B2) ->
+compare_bound_l(x, B1, B2) ->
     erstar_bound:x1(B1) < erstar_bound:x1(B2);
 
-compare_bound(x, u, B1, B2) ->
+compare_bound_l(y, B1, B2) ->
+    erstar_bound:y1(B1) < erstar_bound:y1(B2).
+
+compare_bound_u(x, B1, B2) ->
     erstar_bound:x2(B1) < erstar_bound:x2(B2);
 
-compare_bound(y, l, B1, B2) ->
-    erstar_bound:y1(B1) < erstar_bound:y1(B2);
-
-compare_bound(y, u, B1, B2) ->
+compare_bound_u(y, B1, B2) ->
     erstar_bound:y2(B1) < erstar_bound:y2(B2).
 
 sum_distribs_goodness(_Nodes, M, M, Acc) ->
