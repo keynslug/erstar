@@ -88,15 +88,21 @@ center({X1, Y1, X2, Y2}) ->
 dimensions({X1, Y1, X2, Y2}) ->
     {X2 - X1, Y2 - Y1}.
 
--spec area(bound()) -> number().
+-spec area(empty | bound()) -> number().
 
 area({X1, Y1, X2, Y2}) ->
-    (X2 - X1) * (Y2 - Y1).
+    (X2 - X1) * (Y2 - Y1);
 
--spec margin(bound()) -> number().
+area(empty) ->
+    0.
+
+-spec margin(empty | bound()) -> number().
 
 margin({X1, Y1, X2, Y2}) ->
-    (X2 - X1) + (Y2 - Y1).
+    (X2 - X1) + (Y2 - Y1);
+
+margin(empty) ->
+    0.
 
 -spec unify(empty | bound(), empty | bound()) -> empty | bound().
 

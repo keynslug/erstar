@@ -116,6 +116,9 @@ foldwide(Fun, Acc, {?MODULE, _, Root}) ->
 -spec walk(WalkFun, rtree()) -> [treeleaf()] when
     WalkFun :: fun((node | leaf, erstar_bound:bound()) -> boolean()).
 
+walk(_WalkFun, {?MODULE, _, {_, _, []}}) ->
+    [];
+
 walk(WalkFun, {?MODULE, _, Root}) ->
     walk_node(WalkFun, [], Root).
 

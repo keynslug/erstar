@@ -28,6 +28,9 @@ render_to_file(Filename, To, RStar) ->
 render_to(svg, What) ->
     erstar_svg:render(What).
 
+render_entry(_, empty, _, _, Acc) ->
+    Acc;
+
 render_entry(node, Bound, _, Level, Acc) ->
     [{bound, Bound, Level} | Acc];
 

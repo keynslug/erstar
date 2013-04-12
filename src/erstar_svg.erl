@@ -11,13 +11,16 @@
 
 -spec render(list()) -> iolist().
 
-render(List) when length(List) > 0 ->
+render(List) when is_list(List) ->
     render(List, [], erstar_bound:empty()).
 
 render([Prim | Rest], Acc, Extent) ->
     PrimRender = render_prim(Prim),
     PrimExtent = get_prim_extent(Prim),
     render(Rest, [PrimRender | Acc], erstar_bound:unify(Extent, PrimExtent));
+
+render(_, [], _) ->
+    [header(0, 0, 0, 0), footer()];
 
 render([], Acc, Extent) ->
     {X, Y} = erstar_bound:lowerleft(Extent),
