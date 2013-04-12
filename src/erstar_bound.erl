@@ -115,12 +115,14 @@ unify({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
 -spec intersect(bound(), bound()) -> empty | bound().
 
 intersect({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
-    {Xr1, Xr2} = intersect(Xa1, Xa2, Xb1, Xb2),
+    Xr1 = max(Xa1, Xb1),
+    Xr2 = min(Xa2, Xb2),
     if
         Xr2 < Xr1 ->
             empty;
         true ->
-            {Yr1, Yr2} = intersect(Ya1, Ya2, Yb1, Yb2),
+            Yr1 = max(Ya1, Yb1),
+            Yr2 = min(Ya2, Yb2),
             if
                 Yr2 < Yr1 ->
                     empty;
@@ -129,21 +131,15 @@ intersect({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
             end
     end.
 
-intersect(Xa1, Xa2, Xb1, Xb2) when Xa1 < Xb1 ->
-    {Xb1, min(Xa2, Xb2)};
-
-intersect(Xb1, Xb2, _Xa1, Xa2) ->
-    {Xb1, min(Xa2, Xb2)}.
-
 -spec overlap(bound(), bound()) -> number().
 
 overlap({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
-    Wr = overlap(Xa1, Xa2, Xb1, Xb2),
+    Wr = min(Xa2, Xb2) - max(Xa1, Xb1),
     if
         Wr =< 0 ->
             0;
         true ->
-            Hr = overlap(Ya1, Ya2, Yb1, Yb2),
+            Hr = min(Ya2, Yb2) - max(Ya1, Yb1),
             if
                 Hr =< 0 ->
                     0;
@@ -151,9 +147,3 @@ overlap({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
                     Wr * Hr
             end
     end.
-
-overlap(Xa1, Xa2, Xb1, Xb2) when Xa1 < Xb1 ->
-    min(Xa2, Xb2) - Xb1;
-
-overlap(Xb1, Xb2, _Xa1, Xa2) ->
-    min(Xa2, Xb2) - Xb1.
