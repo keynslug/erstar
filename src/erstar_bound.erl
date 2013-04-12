@@ -38,12 +38,12 @@ empty() ->
 -spec new(number(), number()) -> bound().
 
 new(X, Y) ->
-    new(X, Y, 0, 0).
+    {X, Y, X, Y}.
 
 -spec new(number(), number(), number(), number()) -> bound().
 
 new(X, Y, W, H) when W >= 0, H >= 0 ->
-    {X, Y, W, H}.
+    {X, Y, X + W, Y + H}.
 
 -spec x1(bound()) -> number().
 
@@ -57,13 +57,13 @@ y1({_, Y, _, _}) ->
 
 -spec x2(bound()) -> number().
 
-x2({X, _, W, _}) ->
-    X + W.
+x2({_, _, X, _}) ->
+    X.
 
 -spec y2(bound()) -> number().
 
-y2({_, Y, _, H}) ->
-    Y + H.
+y2({_, _, _, Y}) ->
+    Y.
 
 -spec lowerleft(bound()) -> {number(), number()}.
 
@@ -72,31 +72,31 @@ lowerleft({X, Y, _, _}) ->
 
 -spec upperright(bound()) -> {number(), number()}.
 
-upperright({X, Y, W, H}) ->
-    {X + W, Y + H}.
+upperright({_, _, X, Y}) ->
+    {X, Y}.
 
 -spec center(bound()) -> {number(), number()}.
 
-center({X, Y, 0, 0}) ->
+center({X, Y, X, Y}) ->
     {X, Y};
 
-center({X, Y, W, H}) ->
-    {X + W / 2.0, Y + H / 2.0}.
+center({X1, Y1, X2, Y2}) ->
+    {(X1 + X2) / 2.0, (Y1 + Y2) / 2.0}.
 
 -spec dimensions(bound()) -> {number(), number()}.
 
-dimensions({_, _, W, H}) ->
-    {W, H}.
+dimensions({X1, Y1, X2, Y2}) ->
+    {X2 - X1, Y2 - Y1}.
 
 -spec area(bound()) -> number().
 
-area({_, _, W, H}) ->
-    W * H.
+area({X1, Y1, X2, Y2}) ->
+    (X2 - X1) * (Y2 - Y1).
 
 -spec margin(bound()) -> number().
 
-margin({_, _, W, H}) ->
-    W + H.
+margin({X1, Y1, X2, Y2}) ->
+    (X2 - X1) + (Y2 - Y1).
 
 -spec unify(empty | bound(), empty | bound()) -> empty | bound().
 
@@ -109,57 +109,51 @@ unify(B0, empty) ->
 unify(empty, B1) ->
     B1;
 
-unify({X0, Y0, W0, H0}, {X1, Y1, W1, H1}) ->
-    {X, W} = unify(X0, W0, X1, W1),
-    {Y, H} = unify(Y0, H0, Y1, H1),
-    {X, Y, W, H}.
-
-unify(X0, L0, X1, L1) ->
-    X = min(X0, X1),
-    {X, max(X0 + L0, X1 + L1) - X}.
+unify({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
+    {min(Xa1, Xb1), min(Ya1, Yb1), max(Xa2, Xb2), max(Ya2, Yb2)}.
 
 -spec intersect(bound(), bound()) -> empty | bound().
 
-intersect({X0, Y0, W0, H0}, {X1, Y1, W1, H1}) ->
-    {X, W} = intersect(X0, W0, X1, W1),
+intersect({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
+    {Xr1, Xr2} = intersect(Xa1, Xa2, Xb1, Xb2),
     if
-        W < 0 ->
+        Xr2 < Xr1 ->
             empty;
         true ->
-            {Y, H} = intersect(Y0, H0, Y1, H1),
+            {Yr1, Yr2} = intersect(Ya1, Ya2, Yb1, Yb2),
             if
-                H < 0 ->
+                Yr2 < Yr1 ->
                     empty;
                 true ->
-                    {X, Y, W, H}
+                    {Xr1, Yr1, Xr2, Yr2}
             end
     end.
 
-intersect(X0, L0, X1, L1) when X1 >= X0 ->
-    {X1, min(L1, L0 - (X1 - X0))};
+intersect(Xa1, Xa2, Xb1, Xb2) when Xa1 < Xb1 ->
+    {Xb1, min(Xa2, Xb2)};
 
-intersect(X1, L1, X0, L0) ->
-    {X1, min(L1, L0 - (X1 - X0))}.
+intersect(Xb1, Xb2, _Xa1, Xa2) ->
+    {Xb1, min(Xa2, Xb2)}.
 
 -spec overlap(bound(), bound()) -> number().
 
-overlap({X0, Y0, W0, H0}, {X1, Y1, W1, H1}) ->
-    W = overlap(X0, W0, X1, W1),
+overlap({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
+    Wr = overlap(Xa1, Xa2, Xb1, Xb2),
     if
-        W =< 0 ->
+        Wr =< 0 ->
             0;
         true ->
-            H = overlap(Y0, H0, Y1, H1),
+            Hr = overlap(Ya1, Ya2, Yb1, Yb2),
             if
-                H =< 0 ->
+                Hr =< 0 ->
                     0;
                 true ->
-                    W * H
+                    Wr * Hr
             end
     end.
 
-overlap(X0, L0, X1, L1) when X0 < X1 ->
-    min(L1, L0 - (X1 - X0));
+overlap(Xa1, Xa2, Xb1, Xb2) when Xa1 < Xb1 ->
+    min(Xa2, Xb2) - Xb1;
 
-overlap(X1, L1, X0, L0) ->
-    min(L1, L0 - (X1 - X0)).
+overlap(Xb1, Xb2, _Xa1, Xa2) ->
+    min(Xa2, Xb2) - Xb1.

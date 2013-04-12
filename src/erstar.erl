@@ -157,11 +157,11 @@ does_enclose(leaf, Bound, Location) ->
 does_intersect(_Any, Bound, Location) ->
     erstar_bound:intersect(Location, Bound) =/= empty.
 
-closer_than(node, {X, Y, W, H}, RX, RY, Dist, Dist2) ->
-    HW = W / 2,
-    HH = H / 2,
-    DX = abs(X + HW - RX),
-    DY = abs(Y + HH - RY),
+closer_than(node, {X1, Y1, X2, Y2}, RX, RY, Dist, Dist2) ->
+    HW = (X2 - X1) / 2,
+    HH = (Y2 - Y1) / 2,
+    DX = abs(X1 + HW - RX),
+    DY = abs(Y1 + HH - RY),
     if
         DX > HW + Dist ->
             false;
