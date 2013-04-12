@@ -6,11 +6,17 @@
 %%
 
 -export([
+    depth/1,
     total_overlap_by_level/1,
     total_area_by_level/1
 ]).
 
 %%
+
+-spec depth(erstar:rtree()) -> pos_integer().
+
+depth(RTree) ->
+    erstar:walkfold(fun fold_depth/5, 1, RTree).
 
 -spec total_overlap_by_level(erstar:rtree()) -> [{pos_integer(), number()}].
 
@@ -27,6 +33,12 @@ total_area_by_level(RTree) ->
     AreaByLevel.
 
 %%
+
+fold_depth(node, _, _, _, Acc) ->
+    {descend, Acc};
+
+fold_depth(leaf, _, _, Level, _) ->
+    {done, Level}.
 
 bounds_by_level(leaf, _, _, _, Acc) ->
     Acc;

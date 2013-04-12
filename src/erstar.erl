@@ -15,6 +15,7 @@
     fold/3,
     foldwide/3,
     walk/2,
+    walkfold/3,
     leaves/1,
     size/1,
     at/3,
@@ -121,6 +122,18 @@ walk(_WalkFun, {?MODULE, _, {_, _, []}}) ->
 
 walk(WalkFun, {?MODULE, _, Root}) ->
     walk_node(WalkFun, [], Root).
+%%
+
+-spec walkfold(WalkFun, Acc, rtree()) -> [treeleaf()] when
+    WalkFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Result),
+    Result :: {ok, Acc} | {descend, Acc} | {done, Acc},
+    Acc :: any().
+
+walkfold(_WalkFun, Acc, {?MODULE, _, {_, _, []}}) ->
+    Acc;
+
+walkfold(WalkFun, Acc, {?MODULE, _, Root}) ->
+    catch walk_fold(WalkFun, Acc, 1, Root).
 
 %%
 
@@ -133,8 +146,8 @@ leaves(RTree) ->
 
 -spec size(rtree()) -> non_neg_integer().
 
-size({?MODULE, _, Root}) ->
-    count_leaves(0, Root).
+size(RTree) ->
+    walkfold(fun count_leaves/5, 0, RTree).
 
 %%
 
@@ -517,20 +530,11 @@ fold_node(Fun, Acc, Level, {Bound, Data}) ->
 
 %%
 
-count_leaves(Acc, []) ->
-    Acc;
+count_leaves(node, _, Children = [{_, _} | _], _, Acc) ->
+    {ok, Acc + length(Children)};
 
-count_leaves(Acc, [Node | Rest]) ->
-    count_leaves(count_leaves(Acc, Node), Rest);
-
-count_leaves(Acc, Node) ->
-    count_leaves(has_leaves(Node), Acc, Node).
-
-count_leaves(true, Acc, {_, _, Children}) ->
-    Acc + length(Children);
-
-count_leaves(false, Acc, {_, _, Children}) ->
-    count_leaves(Acc, Children).
+count_leaves(node, _, _, _, Acc) ->
+    {descend, Acc}.
 
 %%
 
@@ -554,6 +558,26 @@ walk_node(false, _Walk, Acc, _Any) ->
 
 %%
 
+walk_fold(_Walk, Acc, _Level, []) ->
+    Acc;
+
+walk_fold(Walk, Acc, Level, [Node | Rest]) ->
+    walk_fold(Walk, walk_fold(Walk, Acc, Level, Node), Level, Rest);
+
+walk_fold(Walk, Acc, Level, Node) ->
+    walk_decide(Walk(nodetype(Node), bound(Node), data(Node), Level, Acc), Walk, Level, Node).
+
+walk_decide({descend, Acc}, Walk, Level, {_, _, Children}) ->
+    walk_fold(Walk, Acc, Level + 1, Children);
+
+walk_decide({ok, Acc}, _Walk, _Level, _Any) ->
+    Acc;
+
+walk_decide({done, Acc}, _Walk, _Level, _Any) ->
+    throw(Acc).
+
+%%
+
 newnode() ->
     {node, erstar_bound:empty(), []}.
 
@@ -571,6 +595,12 @@ nodetype({_, _, _}) ->
 
 nodetype({_, _}) ->
     leaf.
+
+data({_, _, Children}) ->
+    Children;
+
+data({_, Data}) ->
+    Data.
 
 bound({Bound, _}) ->
     Bound;
