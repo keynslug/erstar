@@ -29,8 +29,8 @@ render([], Acc, Extent) ->
 %%
 
 render_prim({bound, Bound, Level}) ->
-    {X, Y} = erstar_bound:lowerleft(Bound),
     CB = get_level_color(Level),
+    {X, Y} = erstar_bound:lowerleft(Bound),
     {W, H} = erstar_bound:dimensions(Bound),
     WC = max(eps(), W),
     HC = max(eps(), H),
