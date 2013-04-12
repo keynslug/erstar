@@ -10,6 +10,8 @@
     instance/1,
     insert/3,
     insert/2,
+    remove/3,
+    remove/2,
     fold/3,
     foldwide/3,
     walk/2,
@@ -74,6 +76,21 @@ insert(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
 
 insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_bulk(Leafs, Root0, Params),
+    update_root(RStar, Root, Params).
+
+%%
+
+-spec remove(erstar_bound:bound(), any(), rtree()) -> rtree().
+
+remove(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
+    {[Root], Orphans} = remove_leaf(newleaf(Bound, Data), Root0, true, {[], []}, Params),
+    FinalRoot = insert_bulk(Orphans, Root, Params),
+    update_root(RStar, FinalRoot, Params).
+
+-spec remove([treeleaf()], rtree()) -> rtree().
+
+remove(Leaves, RStar = {?MODULE, Params, Root0}) ->
+    Root = remove_bulk(Leaves, Root0, [], Params),
     update_root(RStar, Root, Params).
 
 %%
@@ -406,6 +423,55 @@ total_overlap(Acc, Bound, [{_, NodeBound, _} | Rest]) ->
 compute_area_d(Bound, Node) ->
     NodeBound = bound(Node),
     erstar_bound:area(erstar_bound:unify(NodeBound, Bound)) - erstar_bound:area(NodeBound).
+
+%%
+
+remove_bulk([], Root, Orphans, Params) ->
+    insert_bulk(Orphans, Root, Params);
+
+remove_bulk([Leaf | Rest], WasRoot, WasOrphans, Params) ->
+    {[Root], Orphans} = remove_leaf(Leaf, WasRoot, true, {[], WasOrphans -- [Leaf]}, Params),
+    remove_bulk(Rest, Root, Orphans, Params).
+
+remove_leaf(Leaf, Node = {_, _, Children}, IsRoot, {Nodes, Orphans0}, Params) ->
+    LeafBound = bound(Leaf),
+    NodeBound = bound(Node),
+    case erstar_bound:unify(LeafBound, NodeBound) of
+        NodeBound ->
+            SubAcc = {[], Orphans0},
+            HasLeaves = has_leaves(Node),
+            {LeftNodes, Orphans} = remove_leaf(Leaf, Children, HasLeaves, IsRoot, SubAcc, Params),
+            {LeftNodes ++ Nodes, Orphans};
+        _ ->
+            {[Node | Nodes], Orphans0}
+    end.
+
+remove_leaf(_Leaf, [], _, false, {Acc, Orphans}, {MinCap, _, _, _}) when length(Acc) < MinCap ->
+    {[], extract_leaves(Acc, Orphans)};
+
+remove_leaf(_Leaf, [], _, true, {[], Orphans}, _Params) ->
+    {[newnode()], Orphans};
+
+remove_leaf(_Leaf, [], _, true, {Acc = [{node, _, _}], Orphans}, _Params) ->
+    {Acc, Orphans};
+
+remove_leaf(_Leaf, [], _Any, _IsRoot, {Acc, Orphans}, _Params) ->
+    {[newnode(Acc)], Orphans};
+
+remove_leaf(Leaf, Leaves, true, IsRoot, {_, Orphans}, Params) ->
+    remove_leaf(Leaf, [], true, IsRoot, {Leaves -- [Leaf], Orphans}, Params);
+
+remove_leaf(Leaf, [Node | Rest], HasLeaves, IsRoot, Acc, Params) ->
+    remove_leaf(Leaf, Rest, HasLeaves, IsRoot, remove_leaf(Leaf, Node, false, Acc, Params), Params).
+
+extract_leaves([], Acc) ->
+    Acc;
+
+extract_leaves(Leaves = [{_, _} | _], Acc) ->
+    Leaves ++ Acc;
+
+extract_leaves([Node | Rest], Acc) ->
+    extract_leaves(Rest, walk_node(fun (_, _) -> true end, Acc, Node)).
 
 %%
 
