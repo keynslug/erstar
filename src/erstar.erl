@@ -400,8 +400,8 @@ compute_criteria(overlap, Bound, Node, Nodes) ->
 total_overlap(Acc, _Bound, []) ->
     Acc;
 
-total_overlap(Acc, Bound, [Node | Rest]) ->
-    total_overlap(Acc + erstar_bound:overlap(Bound, bound(Node)), Bound, Rest).
+total_overlap(Acc, Bound, [{_, NodeBound, _} | Rest]) ->
+    total_overlap(Acc + erstar_bound:overlap(Bound, NodeBound), Bound, Rest).
 
 compute_area_d(Bound, Node) ->
     NodeBound = bound(Node),
