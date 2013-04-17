@@ -25,6 +25,7 @@
 
 %%
 %% R*-Tree metrics
+%% @doc Small collection of functions useful to measure some aspects of R* trees.
 
 -module(erstar_metrics).
 
@@ -38,10 +39,20 @@
 
 %%
 
+%% @doc Computes depth of an R* tree.
+%%
+%% That is a level where leafs reside assuming level of the root node is 1.
+
 -spec depth(erstar:rtree()) -> pos_integer().
 
 depth(RTree) ->
     erstar:walkfold(fun fold_depth/5, 1, RTree).
+
+%% @doc Computes total overlapping area of all nodes at each level of an R* tree.
+%%
+%% Total overlapping area is sum of overlapping areas of each bound with each
+%% from the same level when each bound taken only once.
+%% Lesser values mean more effective lookups and storage utilization.
 
 -spec total_overlap_by_level(erstar:rtree()) -> [{pos_integer(), number()}].
 
@@ -49,6 +60,11 @@ total_overlap_by_level(RTree) ->
     BoundsByLevel = erstar:fold(fun bounds_by_level/5, dict:new(), RTree),
     OverlapByLevel = overlap_by_level(BoundsByLevel),
     OverlapByLevel.
+
+%% @doc Computes total area of all nodes at each level of an R* tree.
+%%
+%% Obviously, total area is decreasing with each level down a tree.
+%% Lesser values mean more effective storage utilization.
 
 -spec total_area_by_level(erstar:rtree()) -> [{pos_integer(), number()}].
 

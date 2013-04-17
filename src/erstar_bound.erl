@@ -25,6 +25,8 @@
 
 %%
 %% Bounding boxes
+%% @doc Module provides means to deal with simple structures called bounds.
+%% Each such bound contain description of a two-dimensional bounding box.
 
 -module(erstar_bound).
 
@@ -55,6 +57,8 @@
 
 %%
 
+%% @doc Creates an empty bound, with no position and dimensions.
+
 -spec empty() -> empty.
 
 empty() ->
@@ -62,43 +66,62 @@ empty() ->
 
 -spec new(number(), number()) -> bound().
 
+%% @doc Creates bound with position and no dimensions, effectively a point.
+
 new(X, Y) ->
     {X, Y, X, Y}.
 
 -spec new(number(), number(), number(), number()) -> bound().
 
+%% @doc Creates bound with well-defined position and dimensions.
+%% Negative dimensions are not allowed.
+
 new(X, Y, W, H) when W >= 0, H >= 0 ->
     {X, Y, X + W, Y + H}.
+
+%% @doc Returns lower coordinate of a bound on the X axis.
 
 -spec x1(bound()) -> number().
 
 x1({X, _, _, _}) ->
     X.
 
+%% @doc Returns lower coordinate of a bound on the Y axis.
+
 -spec y1(bound()) -> number().
 
 y1({_, Y, _, _}) ->
     Y.
+
+%% @doc Returns upper coordinate of a bound on the X axis.
 
 -spec x2(bound()) -> number().
 
 x2({_, _, X, _}) ->
     X.
 
+%% @doc Returns upper coordinate of a bound on the Y axis.
+
 -spec y2(bound()) -> number().
 
 y2({_, _, _, Y}) ->
     Y.
+
+%% @doc Returns coordinates of the lower left point of a bound.
 
 -spec lowerleft(bound()) -> {number(), number()}.
 
 lowerleft({X, Y, _, _}) ->
     {X, Y}.
 
+%% @doc Returns coordinates of the upper right point of a bound.
+
 -spec upperright(bound()) -> {number(), number()}.
 
 upperright({_, _, X, Y}) ->
     {X, Y}.
+
+%% @doc Returns effective coordinates of the center of a bound.
 
 -spec center(bound()) -> {number(), number()}.
 
@@ -108,10 +131,14 @@ center({X, Y, X, Y}) ->
 center({X1, Y1, X2, Y2}) ->
     {(X1 + X2) / 2.0, (Y1 + Y2) / 2.0}.
 
+%% @doc Returns effective dimensions of a bound.
+
 -spec dimensions(bound()) -> {number(), number()}.
 
 dimensions({X1, Y1, X2, Y2}) ->
     {X2 - X1, Y2 - Y1}.
+
+%% @doc Computes area of a bound.
 
 -spec area(empty | bound()) -> number().
 
@@ -121,6 +148,9 @@ area({X1, Y1, X2, Y2}) ->
 area(empty) ->
     0.
 
+%% @doc Computes margin of a bound.
+%% Margin is equal to the half of perimeter.
+
 -spec margin(empty | bound()) -> number().
 
 margin({X1, Y1, X2, Y2}) ->
@@ -128,6 +158,9 @@ margin({X1, Y1, X2, Y2}) ->
 
 margin(empty) ->
     0.
+
+%% @doc Returns new bound containing each one of specified bounds.
+%% The resulting bound is optimal one in terms of area.
 
 -spec unify(empty | bound(), empty | bound()) -> empty | bound().
 
@@ -142,6 +175,9 @@ unify(empty, B1) ->
 
 unify({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
     {min(Xa1, Xb1), min(Ya1, Yb1), max(Xa2, Xb2), max(Ya2, Yb2)}.
+
+%% @doc Returns new bound comprised of all common points of two specified bound.
+%% The resulting bound can be empty, in case there are no common points at all.
 
 -spec intersect(bound(), bound()) -> empty | bound().
 
@@ -161,6 +197,9 @@ intersect({Xa1, Ya1, Xa2, Ya2}, {Xb1, Yb1, Xb2, Yb2}) ->
                     {Xr1, Yr1, Xr2, Yr2}
             end
     end.
+
+%% @doc Computes area covered by the intersection of two specified bounds.
+%% If these bounds have no intersection, the result will be 0.
 
 -spec overlap(bound(), bound()) -> number().
 

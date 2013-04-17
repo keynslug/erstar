@@ -1,0 +1,5 @@
+@author Andrew Majorov <encube.ul@gmail.com>
+@copyright 2011-2012 Andrew Majorov
+@version 0.1.0
+@title ERStar
+@doc Almost fully conforming implementation of the dynamic R* Trees

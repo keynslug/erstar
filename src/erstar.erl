@@ -25,6 +25,7 @@
 
 %%
 %% R*-Tree
+%% @doc Implementation of R* tree data structure.
 
 -module(erstar).
 
@@ -60,18 +61,56 @@
 -export_type([rtree/0]).
 
 %%
+%% @doc Creates an empty R* tree with specific maximum node capacity.
+%% Same as to create a tree with minimum node capacity equal to 40% of the
+%% `MaxCapacity'.
+%% @see new/2
 
--spec new(pos_integer()) -> rtree().
+-spec new(MaxCapacity :: pos_integer()) -> rtree().
 
 new(MaxCap) ->
     new(trunc(0.4 * MaxCap), MaxCap).
 
--spec new(pos_integer(), pos_integer()) -> rtree().
+%%
+%% @doc Creates an empty R* tree with specific minimum and maximum node capacity.
+%% Same as to create a tree with given node capacities, choose-subtree cutout of 32
+%% and reinserts count equal to 30% of the `MaxCapacity'.
+%% @see new/4
+
+-spec new(MinCapacity :: pos_integer(), MaxCapacity :: pos_integer()) -> rtree().
 
 new(MinCap, MaxCap) ->
     new(MinCap, MaxCap, 32, trunc(0.3 * MaxCap)).
 
--spec new(pos_integer(), pos_integer(), pos_integer(), pos_integer()) -> rtree().
+%%
+%% @doc Creates an empty R* tree with specific node capacities, choose-subtree cutout
+%% value and reinserts count.
+%%
+%% Node capacities dictate how many children each node should contain. Only the root
+%% node allowed to contain lesser than `MinCapacity' number of children.
+%% Minimum node capacity should be at least 2 and maximum capacity should be at
+%% least double the minimum one. Practically, in the most of cases wide nodes
+%% are preferred, starting from 16 or 32, and wider.
+%%
+%% Choose-subtree cutout value says how many children at each level are being
+%% considered during each insertion. Generally, the lesser this value is, the
+%% faster each insert will be, but later lookups may degrade in performance
+%% instead.
+%%
+%% Finally, reinserts count states how many nodes should be inserted again during
+%% each node split. Theretically, greater values would give better R* tree
+%% lookup performance in the long term. But on the other hand they will incur
+%% notable insert performace penalty. However, author's observations show that
+%% there was no notable improvement in the tree quality on different, even pretty big,
+%% datasets when recommended values were used.
+%%
+%% As paper on the subject states, the general optimal value for the minimum node
+%% capacity is 40% of the maximum one, for the choose-subtree cutout is 32 and for
+%% the reinserts count is at 30% of the maximum node capacity.
+
+-spec new(MinCapacity, MaxCapacity, pos_integer(), non_neg_integer()) -> rtree() when
+    MinCapacity :: pos_integer(),
+    MaxCapacity :: pos_integer().
 
 new(MinCap, MaxCap, ChooseCutout, ReinsertCount) when
     is_integer(MinCap), MinCap > 1,
@@ -81,6 +120,7 @@ new(MinCap, MaxCap, ChooseCutout, ReinsertCount) when
     {?MODULE, {MinCap, MaxCap, ChooseCutout, ReinsertCount}, newnode()}.
 
 %%
+%% @doc Verifies that the given term is an R* tree.
 
 -spec instance(any()) -> boolean().
 
@@ -91,12 +131,23 @@ instance(_) ->
     false.
 
 %%
+%% @doc Inserts new leaf into an R* tree, given its bound and arbitrary term
+%% to associate with it.
+%%
+%% Generally, it is expensive operation. If you expect large number of inserts
+%% with your usage plan, consider lowering reinserts count or maximum node
+%% capacity, or both.
 
 -spec insert(erstar_bound:bound(), any(), rtree()) -> rtree().
 
 insert(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
     Root = insert_leaf(newleaf(Bound, Data), Root0, 1, Params),
     update_root(RStar, Root, Params).
+
+%%
+%% @doc Inserts a bulk of leafs simultaneously.
+%% Each leaf is a tuple containing its bound and arbitrary term.
+%% @see insert/3
 
 -spec insert([treeleaf()], rtree()) -> rtree().
 
@@ -105,6 +156,8 @@ insert(Leafs, RStar = {?MODULE, Params, Root0}) ->
     update_root(RStar, Root, Params).
 
 %%
+%% @doc Removes the leaf from an R* tree, given its bound and arbitrary term.
+%% Does nothing if tree does not contain such leaf.
 
 -spec remove(erstar_bound:bound(), any(), rtree()) -> rtree().
 
@@ -113,6 +166,10 @@ remove(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
     FinalRoot = insert_bulk(Orphans, Root, Params),
     update_root(RStar, FinalRoot, Params).
 
+%%
+%% @doc Removes the bulk of leaves with a single call.
+%% @see remove/3
+
 -spec remove([treeleaf()], rtree()) -> rtree().
 
 remove(Leaves, RStar = {?MODULE, Params, Root0}) ->
@@ -120,6 +177,12 @@ remove(Leaves, RStar = {?MODULE, Params, Root0}) ->
     update_root(RStar, Root, Params).
 
 %%
+%% @doc Folds over entire tree in a depth-first traversal.
+%% Accumulates result with each call to the user-defined function. Each call is
+%% given entry type, `node' or `leaf', its bound, the thing it contain, numeric
+%% level in a tree and the accumulator.
+%% Leaves contain arbitrary terms passed to `insert' while nodes contain list of
+%% their children.
 
 -spec fold(FoldFun, Acc, rtree()) -> Acc when
     FoldFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Acc),
@@ -129,6 +192,9 @@ fold(Fun, Acc, {?MODULE, _, Root}) ->
     fold_deep(Fun, Acc, 1, Root).
 
 %%
+%% @doc Folds over entire tree in a breadth-first traversal.
+%% Otherwise, the same as `fold/3'.
+%% @see fold/3
 
 -spec foldwide(FoldFun, Acc, rtree()) -> Acc when
     FoldFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Acc),
@@ -138,6 +204,11 @@ foldwide(Fun, Acc, {?MODULE, _, Root}) ->
     fold_wide(Fun, Acc, 1, Root).
 
 %%
+%% @doc Walks over nodes and leaves in a tree, effectively gathering list of
+%% leaves accepted by the user-defined function.
+%% User-defined function should decide, given entry type and its bound, if a node
+%% should be visited or a leaf should appear in the result.
+%% If you want to issue some specific locate query on a tree, start here.
 
 -spec walk(WalkFun, rtree()) -> [treeleaf()] when
     WalkFun :: fun((node | leaf, erstar_bound:bound()) -> boolean()).
@@ -147,9 +218,22 @@ walk(_WalkFun, {?MODULE, _, {_, _, []}}) ->
 
 walk(WalkFun, {?MODULE, _, Root}) ->
     walk_node(WalkFun, [], Root).
-%%
 
--spec walkfold(WalkFun, Acc, rtree()) -> [treeleaf()] when
+%%
+%% @doc Walks over nodes and leaves in a tree, simultaneously folding over these
+%% which were accepted by the user-defined function.
+%% User-defined function should decide, given entry type, its bound, thing it contains,
+%% its level in a tree and the accumulator, what it wants to do further. If `{ok, Acc}'
+%% is returned, the walk operation continues over other siblings in a tree. On the other
+%% hand, if `{descend, Acc}' is returned, operation continues with all children of
+%% the current node. It is not allowed to `descend' when walking over a leaf. Finally,
+%% `{done, Acc}' ends the walk operation instantly, returning `Acc' as the final result.
+%%
+%% This operation is a hybrid of `fold/3' and `walk/2'.
+%% @see fold/3
+%% @see walk/2
+
+-spec walkfold(WalkFun, Acc, rtree()) -> Acc when
     WalkFun :: fun((node | leaf, erstar_bound:bound(), any(), pos_integer(), Acc) -> Result),
     Result :: {ok, Acc} | {descend, Acc} | {done, Acc},
     Acc :: any().
@@ -161,6 +245,7 @@ walkfold(WalkFun, Acc, {?MODULE, _, Root}) ->
     catch walk_fold(WalkFun, Acc, 1, Root).
 
 %%
+%% @doc Gathers plain list of all leaves in an R* tree.
 
 -spec leaves(rtree()) -> [treeleaf()].
 
@@ -168,6 +253,10 @@ leaves(RTree) ->
     walk(fun always_true/2, RTree).
 
 %%
+%% @doc Computes the size of an R* tree.
+%%
+%% Please note that the computation involves traversal
+%% of the whole tree.
 
 -spec size(rtree()) -> non_neg_integer().
 
@@ -175,6 +264,8 @@ size(RTree) ->
     walkfold(fun count_leaves/5, 0, RTree).
 
 %%
+%% @doc Locates all the leaves which contain the given point in its bound.
+%% @see locate/3
 
 -spec at(number(), number(), rtree()) -> [treeleaf()].
 
@@ -182,6 +273,9 @@ at(X, Y, RStar) ->
     locate(intersect, erstar_bound:new(X, Y), RStar).
 
 %%
+%% @doc Locates all the leaves which are closer than `CloserThan' units to
+%% the given point.
+%% Distance to a bound is said to be the distance to its center.
 
 -spec around(number(), number(), number(), rtree()) -> [treeleaf()].
 
@@ -190,11 +284,17 @@ around(X, Y, CloserThan, RStar) ->
     walk(fun (Type, Bound) -> closer_than(Type, Bound, X, Y, CloserThan, Dist2) end, RStar).
 
 %%
+%% @doc Locates all the leaves getting inside the given bound.
+%% @see locate/3
 
 -spec locate(erstar_bound:bound(), rtree()) -> [treeleaf()].
 
 locate(Where, RStar) ->
     locate(enclose, Where, RStar).
+
+%%
+%% @doc Locates all the leaves enclosed inside or overlapping the given bound.
+%% Thus, `enclose' and `intersect' specify which set will be returned, respectively.
 
 -spec locate(enclose | intersect, erstar_bound:bound(), rtree()) -> [treeleaf()].
 
