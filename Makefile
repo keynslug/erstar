@@ -33,3 +33,6 @@ dialyzer:
 	dialyzer ebin -Wrace_conditions -Wunderspecs -Werror_handling
 
 ci: compile test
+
+docs:
+	$(REBAR) doc
