@@ -46,6 +46,7 @@
     size/1,
     at/3,
     around/4,
+    inbetween/5,
     locate/2,
     locate/3
 ]).
@@ -284,6 +285,19 @@ around(X, Y, CloserThan, RStar) ->
     walk(fun (Type, Bound) -> closer_than(Type, Bound, X, Y, CloserThan, Dist2) end, RStar).
 
 %%
+%% @doc Locates all the leaves which are in between `FartherThan' and `ButCloserThan'
+%% units to the given point.
+%% Distance to a bound is said to be the distance to its center.
+
+-spec inbetween(number(), number(), number(), number(), rtree()) -> [treeleaf()].
+
+inbetween(X, Y, FartherThan, ButCloserThan, RStar) ->
+    FT2 = FartherThan * FartherThan,
+    CT2 = ButCloserThan * ButCloserThan,
+    WalkFun = fun (Type, Bound) -> in_between(Type, Bound, X, Y, FT2, ButCloserThan, CT2) end,
+    walk(WalkFun, RStar).
+
+%%
 %% @doc Locates all the leaves getting inside the given bound.
 %% @see locate/3
 
@@ -341,6 +355,25 @@ closer_than(leaf, Bound, RX, RY, _, Dist2) ->
     DX = CX - RX,
     DY = CY - RY,
     (DX * DX + DY * DY) =< Dist2.
+
+in_between(node, Bound = {X1, Y1, X2, Y2}, RX, RY, FT2, CT, CT2) ->
+    closer_than(node, Bound, RX, RY, CT, CT2) andalso begin
+        CX = (X1 + X2) / 2,
+        CY = (Y1 + Y2) / 2,
+        HW = (X2 - X1) / 2,
+        HH = (Y2 - Y1) / 2,
+        DX = abs(RX - CX) + HW,
+        DY = abs(RY - CY) + HH,
+        D2 = DX * DX + DY * DY,
+        D2 > FT2
+    end;
+
+in_between(leaf, Bound, RX, RY, FT2, _, CT2) ->
+    {CX, CY} = erstar_bound:center(Bound),
+    DX = CX - RX,
+    DY = CY - RY,
+    D2 = DX * DX + DY * DY,
+    D2 > FT2 andalso D2 =< CT2.
 
 always_true(_, _) ->
     true.
