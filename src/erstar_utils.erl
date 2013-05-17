@@ -31,11 +31,19 @@
 %%
 
 -export([
+    render/1,
     render/2,
     render_to_file/3
 ]).
 
 %%
+
+%% @doc Visualises any R* tree in an opaque internal format.
+
+-spec render(erstar:rtree()) -> list().
+
+render(RStar) ->
+    erstar:foldwide(fun render_entry/5, [], RStar).
 
 %% @doc Visualises any R* tree in an external format.
 %% The only available external format is `svg'.
@@ -43,8 +51,7 @@
 -spec render(svg, erstar:rtree()) -> iolist().
 
 render(To, RStar) ->
-    Renderables = erstar:foldwide(fun render_entry/5, [], RStar),
-    render_to(To, Renderables).
+    render_to(To, render(RStar)).
 
 %% @doc Visualises any R* tree in an external format and writes result to a file.
 %% The only available external format is `svg'.
