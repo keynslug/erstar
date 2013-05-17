@@ -286,7 +286,7 @@ around(X, Y, CloserThan, RStar) ->
 
 %%
 %% @doc Locates all the leaves which are in between `FartherThan' and `ButCloserThan'
-%% units to the given point.
+%% units far from the given point.
 %% Distance to a bound is said to be the distance to its center.
 
 -spec inbetween(number(), number(), number(), number(), rtree()) -> [treeleaf()].
