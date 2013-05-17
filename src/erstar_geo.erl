@@ -201,7 +201,23 @@ is_inside_small_circle(Phi, Lambda, Dist, {Phi1, Lambda1, Phi2, Lambda2}) ->
 
 has_small_circle_extent_overlap(RPhi, RLambda, Dist, Bound) ->
     Extents = small_circle_extents(RPhi, RLambda, Dist),
+    has_intersection(Extents, Bound) orelse has_periodic_intersection(Extents, Bound).
+
+has_periodic_intersection({Phi1, Lambda1, Phi2, Lambda2}, Bound) when Lambda1 < ?PI ->
+    has_intersection({Phi1, Lambda1 + ?PI * 2.0, Phi2, Lambda2 + ?PI * 2.0}, Bound);
+
+has_periodic_intersection({Phi1, Lambda1, Phi2, Lambda2}, Bound) when Lambda2 > ?PI ->
+    has_intersection({Phi1, Lambda1 - ?PI * 2.0, Phi2, Lambda2 - ?PI * 2.0}, Bound);
+
+has_periodic_intersection(_Extents, _Bound) ->
+    false.
+
+has_intersection(Extents, Bound) ->
     erstar_bound:intersect(Extents, Bound) =/= empty.
+
+has_intersections(Extents = {Phi1, Lambda1, Phi2, Lambda2}, Bound) when Lambda1 < ?PI ->
+    erstar_bound:intersect(Extents, Bound) orelse
+        erstar_bound:intersect({Phi1, Lambda1 + ?PI * 2.0, Phi2, Lambda2 + ?PI * 2.0}, Bound).
 
 has_small_circle_overlap(RPhi, RLambda, Dist, {Phi1, Lambda1, Phi2, Lambda2}) ->
     has_small_circle_overlap(
