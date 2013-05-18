@@ -6,3 +6,6 @@ erl_crash.dump
 logs
 *.sublime-workspace
 .tags*
+priv/*.so
+priv/*.dll
+*.o
