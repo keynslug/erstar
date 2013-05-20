@@ -1,0 +1,49 @@
+%% -*- erlang -*-
+
+Opts = [
+
+    {erl_opts, [
+        {d, 'NIFEXT'}
+    ]},
+
+    {port_specs, [
+        {"priv/erstar_geo.so", ["c_src/geo/*.c"]}
+    ]},
+
+    {port_env, [
+
+        {".*", "CXXFLAGS", "$CXXFLAGS -g -Wall -Werror -O3"},
+
+        {"(linux|solaris|freebsd|netbsd|openbsd|dragonfly|darwin)", "LDFLAGS", "$LDFLAGS -lstdc++"},
+
+        %% OS X Leopard flags for 64-bit
+        {"darwin9.*-64$", "CXXFLAGS", "-m64"},
+        {"darwin9.*-64$", "LDFLAGS", "-arch x86_64"},
+
+        %% OS X Snow Leopard flags for 32-bit
+        {"darwin10.*-32$", "CXXFLAGS", "-m32"},
+        {"darwin10.*-32$", "LDFLAGS", "-arch i386"}
+
+    ]}
+
+],
+
+Append = fun
+    (F, Config, []) ->
+        Config;
+    (F, Config, [{E, Opts} | Rest]) ->
+        WereOpts = case lists:keysearch(E, 1, Config) of
+            false ->
+                [];
+            {value, {E, Value}} ->
+                Value
+        end,
+        F(F, lists:keystore(E, 1, Config, {E, WereOpts ++ Opts}), Rest)
+end,
+
+case os:getenv("ERSTAR_NIFEXT") of
+    false ->
+        CONFIG;
+    _ ->
+        Append(Append, CONFIG, Opts)
+end.
