@@ -43,7 +43,8 @@
 
 -export([
     deg_to_rad/1,
-    rad_to_deg/1
+    rad_to_deg/1,
+    distance/4
 ]).
 
 -ifdef(NIFEXT).
@@ -74,8 +75,9 @@ init() ->
 -spec around(number(), number(), number(), erstar:rtree()) -> [erstar:treeleaf()].
 
 around(Phi, Lambda, CloserThan, RStar) ->
+    Extents = small_circle_extents(Phi, Lambda, CloserThan),
     erstar:walk(fun (Type, Bound) ->
-        closer_than(Type, Bound, Phi, Lambda, CloserThan)
+        closer_than(Type, Bound, Extents, Phi, Lambda, CloserThan)
     end, RStar).
 
 %% @doc Locates all the leaves which are in between `FartherThan` and `CloserThan'
@@ -87,8 +89,9 @@ around(Phi, Lambda, CloserThan, RStar) ->
 -spec inbetween(number(), number(), number(), number(), erstar:rtree()) -> [erstar:treeleaf()].
 
 inbetween(Phi, Lambda, FartherThan, CloserThan, RStar) ->
+    Extents = small_circle_extents(Phi, Lambda, CloserThan),
     erstar:walk(fun (Type, Bound) ->
-        in_between(Type, Bound, Phi, Lambda, FartherThan, CloserThan)
+        in_between(Type, Bound, Extents, Phi, Lambda, FartherThan, CloserThan)
     end, RStar).
 
 %%
@@ -109,26 +112,10 @@ deg_to_rad(A) ->
 rad_to_deg(A) ->
     A * 180.0 / ?PI.
 
-%%
+%% @doc Measures distance between two points on a sphere, given its spherical
+%% coordinates in radians. Returned value expressed in great circle arc radians.
 
-closer_than(node, Bound, RPhi, RLambda, Dist) ->
-    is_point_inside(RPhi, RLambda, Bound) orelse
-        has_small_circle_extent_overlap(RPhi, RLambda, Dist, Bound);
-
-closer_than(leaf, Bound, RPhi, RLambda, Dist) ->
-    {CPhi, CLambda} = erstar_bound:center(Bound),
-    distance(CPhi, CLambda, RPhi, RLambda) =< Dist.
-
-in_between(node, Bound, RPhi, RLambda, FDist, CDist) ->
-    closer_than(node, Bound, RPhi, RLambda, CDist) andalso
-        not is_inside_small_circle(RPhi, RLambda, FDist, Bound);
-
-in_between(leaf, Bound, RPhi, RLambda, FDist, CDist) ->
-    {CPhi, CLambda} = erstar_bound:center(Bound),
-    Dist = distance(CPhi, CLambda, RPhi, RLambda),
-    Dist =< CDist andalso Dist >= FDist.
-
-%%
+-spec distance(number(), number(), number(), number()) -> number().
 
 distance(Phi1, Lambda1, Phi2, Lambda2) ->
     DLambda = Lambda2 - Lambda1,
@@ -144,6 +131,27 @@ distance(Phi1, Lambda1, Phi2, Lambda2) ->
         ),
         SinPhi1 * SinPhi2 + CosPhi1 * CosPhi2 * CosDLambda
     ).
+
+%%
+
+closer_than(node, Bound, Extents, RPhi, RLambda, _Dist) ->
+    is_inside_extents(RPhi, RLambda, Bound) orelse
+        has_small_circle_extent_overlap(Extents, Bound);
+
+closer_than(leaf, Bound, _Extents, RPhi, RLambda, Dist) ->
+    {CPhi, CLambda} = erstar_bound:center(Bound),
+    distance(CPhi, CLambda, RPhi, RLambda) =< Dist.
+
+in_between(node, Bound, Extents, RPhi, RLambda, FDist, CDist) ->
+    closer_than(node, Bound, Extents, RPhi, RLambda, CDist) andalso
+        not is_inside_small_circle(Bound, RPhi, RLambda, FDist);
+
+in_between(leaf, Bound, _Extents, RPhi, RLambda, FDist, CDist) ->
+    {CPhi, CLambda} = erstar_bound:center(Bound),
+    Dist = distance(CPhi, CLambda, RPhi, RLambda),
+    Dist =< CDist andalso Dist >= FDist.
+
+%%
 
 small_circle_lambda_by_phi(RPhi, RLambda, Dist, Phi) ->
     case cos(RPhi) * cos(Phi) of
@@ -206,18 +214,17 @@ small_circle_extents(RPhi, RLambda, Dist) ->
 
 %%
 
-is_point_inside(Phi, Lambda, {Phi1, Lambda1, Phi2, Lambda2}) ->
+is_inside_extents(Phi, Lambda, {Phi1, Lambda1, Phi2, Lambda2}) ->
     Phi >= Phi1 andalso Phi =< Phi2 andalso
         Lambda >= Lambda1 andalso Lambda =< Lambda2.
 
-is_inside_small_circle(Phi, Lambda, Dist, {Phi1, Lambda1, Phi2, Lambda2}) ->
+is_inside_small_circle({Phi1, Lambda1, Phi2, Lambda2}, Phi, Lambda, Dist) ->
     distance(Phi, Lambda, Phi1, Lambda1) =< Dist andalso
         distance(Phi, Lambda, Phi1, Lambda2) =< Dist andalso
         distance(Phi, Lambda, Phi2, Lambda1) =< Dist andalso
         distance(Phi, Lambda, Phi2, Lambda2) =< Dist.
 
-has_small_circle_extent_overlap(RPhi, RLambda, Dist, Bound) ->
-    Extents = small_circle_extents(RPhi, RLambda, Dist),
+has_small_circle_extent_overlap(Extents, Bound) ->
     has_intersection(Extents, Bound) orelse has_periodic_intersection(Extents, Bound).
 
 has_periodic_intersection({Phi1, Lambda1, Phi2, Lambda2}, Bound) when Lambda1 < -?PI ->
@@ -232,7 +239,7 @@ has_periodic_intersection(_Extents, _Bound) ->
 has_intersection(Extents, Bound) ->
     erstar_bound:intersect(Extents, Bound) =/= empty.
 
-has_small_circle_overlap(RPhi, RLambda, Dist, {Phi1, Lambda1, Phi2, Lambda2}) ->
+has_small_circle_overlap({Phi1, Lambda1, Phi2, Lambda2}, RPhi, RLambda, Dist) ->
     has_small_circle_overlap(
         small_circle_lambda_by_phi(RPhi, RLambda, Dist, Phi1), Lambda1, Lambda2
     ) orelse
