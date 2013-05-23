@@ -62,6 +62,25 @@
 -export_type([rtree/0]).
 
 %%
+
+-ifdef(NIFEXT).
+
+-on_load(init/0).
+
+init() ->
+    PrivDir = case code:priv_dir(?MODULE) of
+        {error, _} ->
+            EbinDir = filename:dirname(code:which(?MODULE)),
+            AppPath = filename:dirname(EbinDir),
+            filename:join(AppPath, "priv");
+        Path ->
+            Path
+    end,
+    erlang:load_nif(filename:join(PrivDir, ?MODULE_STRING), 0).
+
+-endif.
+
+%%
 %% @doc Creates an empty R* tree with specific maximum node capacity.
 %% Same as to create a tree with minimum node capacity equal to 40% of the
 %% `MaxCapacity'.
