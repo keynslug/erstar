@@ -22,9 +22,7 @@
 ### render/1 ###
 
 
-<pre><code>
-render(List::list()) -&gt; iolist()
-</code></pre>
+<pre><code>render(List::list()) -&gt; iolist()</code></pre>
 
 <br></br>
 

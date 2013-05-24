@@ -21,9 +21,7 @@ Implementation of R* tree data structure.
 
 
 
-<pre><code>
-rtree() = {'?MODULE', {pos_integer(), pos_integer(), pos_integer(), non_neg_integer()}, <a href="#type-treenode">treenode()</a>}
-</code></pre>
+<pre><code>rtree() = {'?MODULE', {pos_integer(), pos_integer(), pos_integer(), non_neg_integer()}, <a href="#type-treenode">treenode()</a>}</code></pre>
 
 
 
@@ -33,9 +31,7 @@ rtree() = {'?MODULE', {pos_integer(), pos_integer(), pos_integer(), non_neg_inte
 
 
 
-<pre><code>
-treeleaf() = {<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any()}
-</code></pre>
+<pre><code>treeleaf() = {<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any()}</code></pre>
 
 
 
@@ -45,9 +41,7 @@ treeleaf() = {<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any
 
 
 
-<pre><code>
-treenode() = {node, empty | <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, [<a href="#type-treenode">treenode()</a> | <a href="#type-treeleaf">treeleaf()</a>]}
-</code></pre>
+<pre><code>treenode() = {node, empty | <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, [<a href="#type-treenode">treenode()</a> | <a href="#type-treeleaf">treeleaf()</a>]}</code></pre>
 
 
 <a name="index"></a>
@@ -73,9 +67,7 @@ which were accepted by the user-defined function.</td></tr></table>
 ### around/4 ###
 
 
-<pre><code>
-around(X::number(), Y::number(), CloserThan::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>around(X::number(), Y::number(), CloserThan::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -88,9 +80,7 @@ Distance to a bound is said to be the distance to its center.
 ### at/3 ###
 
 
-<pre><code>
-at(X::number(), Y::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>at(X::number(), Y::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -103,9 +93,7 @@ __See also:__ [locate/3](#locate-3).
 ### fold/3 ###
 
 
-<pre><code>
-fold(FoldFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc
-</code></pre>
+<pre><code>fold(FoldFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc</code></pre>
 
 <ul class="definitions"><li><code>FoldFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any(), pos_integer(), Acc) -&gt; Acc)</code></li><li><code>Acc = any()</code></li></ul>
 
@@ -120,9 +108,7 @@ their children.
 ### foldwide/3 ###
 
 
-<pre><code>
-foldwide(FoldFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc
-</code></pre>
+<pre><code>foldwide(FoldFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc</code></pre>
 
 <ul class="definitions"><li><code>FoldFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any(), pos_integer(), Acc) -&gt; Acc)</code></li><li><code>Acc = any()</code></li></ul>
 
@@ -135,9 +121,7 @@ __See also:__ [fold/3](#fold-3).
 ### inbetween/5 ###
 
 
-<pre><code>
-inbetween(X::number(), Y::number(), FartherThan::number(), ButCloserThan::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>inbetween(X::number(), Y::number(), FartherThan::number(), ButCloserThan::number(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -150,9 +134,7 @@ Distance to a bound is said to be the distance to its center.
 ### insert/2 ###
 
 
-<pre><code>
-insert(Leafs::[<a href="#type-treeleaf">treeleaf()</a>], RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>insert(Leafs::[<a href="#type-treeleaf">treeleaf()</a>], RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -166,9 +148,7 @@ __See also:__ [insert/3](#insert-3).
 ### insert/3 ###
 
 
-<pre><code>
-insert(Bound::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, Data::any(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>insert(Bound::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, Data::any(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -186,9 +166,7 @@ capacity, or both.
 ### instance/1 ###
 
 
-<pre><code>
-instance(X1::any()) -&gt; boolean()
-</code></pre>
+<pre><code>instance(X1::any()) -&gt; boolean()</code></pre>
 
 <br></br>
 
@@ -199,9 +177,7 @@ Verifies that the given term is an R* tree.
 ### leaves/1 ###
 
 
-<pre><code>
-leaves(RTree::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>leaves(RTree::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -212,9 +188,7 @@ Gathers plain list of all leaves in an R* tree.
 ### locate/2 ###
 
 
-<pre><code>
-locate(Where::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>locate(Where::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -227,9 +201,7 @@ __See also:__ [locate/3](#locate-3).
 ### locate/3 ###
 
 
-<pre><code>
-locate(X1::enclose | intersect, Where::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>locate(X1::enclose | intersect, Where::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, RStar::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -241,9 +213,7 @@ Thus, `enclose` and `intersect` specify which set will be returned, respectively
 ### new/1 ###
 
 
-<pre><code>
-new(MaxCapacity::pos_integer()) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>new(MaxCapacity::pos_integer()) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -258,9 +228,7 @@ __See also:__ [new/2](#new-2).
 ### new/2 ###
 
 
-<pre><code>
-new(MinCapacity::pos_integer(), MaxCapacity::pos_integer()) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>new(MinCapacity::pos_integer(), MaxCapacity::pos_integer()) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -275,9 +243,7 @@ __See also:__ [new/4](#new-4).
 ### new/4 ###
 
 
-<pre><code>
-new(MinCapacity, MaxCapacity, ChooseCutout::pos_integer(), ReinsertCount::non_neg_integer()) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>new(MinCapacity, MaxCapacity, ChooseCutout::pos_integer(), ReinsertCount::non_neg_integer()) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <ul class="definitions"><li><code>MinCapacity = pos_integer()</code></li><li><code>MaxCapacity = pos_integer()</code></li></ul>
 
@@ -318,9 +284,7 @@ the reinserts count is at 30% of the maximum node capacity.
 ### remove/2 ###
 
 
-<pre><code>
-remove(Leaves::[<a href="#type-treeleaf">treeleaf()</a>], RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>remove(Leaves::[<a href="#type-treeleaf">treeleaf()</a>], RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -333,9 +297,7 @@ __See also:__ [remove/3](#remove-3).
 ### remove/3 ###
 
 
-<pre><code>
-remove(Bound::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, Data::any(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a>
-</code></pre>
+<pre><code>remove(Bound::<a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, Data::any(), RStar::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
 
 <br></br>
 
@@ -347,9 +309,7 @@ Does nothing if tree does not contain such leaf.
 ### size/1 ###
 
 
-<pre><code>
-size(RTree::<a href="#type-rtree">rtree()</a>) -&gt; non_neg_integer()
-</code></pre>
+<pre><code>size(RTree::<a href="#type-rtree">rtree()</a>) -&gt; non_neg_integer()</code></pre>
 
 <br></br>
 
@@ -365,9 +325,7 @@ of the whole tree.
 ### walk/2 ###
 
 
-<pre><code>
-walk(WalkFun, X2::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]
-</code></pre>
+<pre><code>walk(WalkFun, X2::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
 <ul class="definitions"><li><code>WalkFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>) -&gt; boolean())</code></li></ul>
 
@@ -381,9 +339,7 @@ If you want to issue some specific locate query on a tree, start here.
 ### walkfold/3 ###
 
 
-<pre><code>
-walkfold(WalkFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc
-</code></pre>
+<pre><code>walkfold(WalkFun, Acc, X3::<a href="#type-rtree">rtree()</a>) -&gt; Acc</code></pre>
 
 <ul class="definitions"><li><code>WalkFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>, any(), pos_integer(), Acc) -&gt; Result)</code></li><li><code>Result = {ok, Acc} | {descend, Acc} | {done, Acc}</code></li><li><code>Acc = any()</code></li></ul>
 

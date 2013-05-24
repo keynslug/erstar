@@ -24,9 +24,7 @@ Module provides means to deal with simple structures called bounds.
 
 
 
-<pre><code>
-bound() = {number(), number(), number(), number()}
-</code></pre>
+<pre><code>bound() = {number(), number(), number(), number()}</code></pre>
 
 
 <a name="index"></a>
@@ -46,9 +44,7 @@ bound() = {number(), number(), number(), number()}
 ### area/1 ###
 
 
-<pre><code>
-area(X1::empty | <a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>area(X1::empty | <a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -59,9 +55,7 @@ Computes area of a bound.
 ### center/1 ###
 
 
-<pre><code>
-center(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}
-</code></pre>
+<pre><code>center(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}</code></pre>
 
 <br></br>
 
@@ -72,9 +66,7 @@ Returns effective coordinates of the center of a bound.
 ### dimensions/1 ###
 
 
-<pre><code>
-dimensions(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}
-</code></pre>
+<pre><code>dimensions(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}</code></pre>
 
 <br></br>
 
@@ -85,9 +77,7 @@ Returns effective dimensions of a bound.
 ### empty/0 ###
 
 
-<pre><code>
-empty() -&gt; empty
-</code></pre>
+<pre><code>empty() -&gt; empty</code></pre>
 
 <br></br>
 
@@ -98,9 +88,7 @@ Creates an empty bound, with no position and dimensions.
 ### intersect/2 ###
 
 
-<pre><code>
-intersect(X1::<a href="#type-bound">bound()</a>, X2::<a href="#type-bound">bound()</a>) -&gt; empty | <a href="#type-bound">bound()</a>
-</code></pre>
+<pre><code>intersect(X1::<a href="#type-bound">bound()</a>, X2::<a href="#type-bound">bound()</a>) -&gt; empty | <a href="#type-bound">bound()</a></code></pre>
 
 <br></br>
 
@@ -112,9 +100,7 @@ The resulting bound can be empty, in case there are no common points at all.
 ### lowerleft/1 ###
 
 
-<pre><code>
-lowerleft(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}
-</code></pre>
+<pre><code>lowerleft(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}</code></pre>
 
 <br></br>
 
@@ -125,9 +111,7 @@ Returns coordinates of the lower left point of a bound.
 ### margin/1 ###
 
 
-<pre><code>
-margin(X1::empty | <a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>margin(X1::empty | <a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -139,9 +123,7 @@ Margin is equal to the half of perimeter.
 ### new/2 ###
 
 
-<pre><code>
-new(X::number(), Y::number()) -&gt; <a href="#type-bound">bound()</a>
-</code></pre>
+<pre><code>new(X::number(), Y::number()) -&gt; <a href="#type-bound">bound()</a></code></pre>
 
 <br></br>
 
@@ -152,9 +134,7 @@ Creates bound with position and no dimensions, effectively a point.
 ### new/4 ###
 
 
-<pre><code>
-new(X::number(), Y::number(), W::number(), H::number()) -&gt; <a href="#type-bound">bound()</a>
-</code></pre>
+<pre><code>new(X::number(), Y::number(), W::number(), H::number()) -&gt; <a href="#type-bound">bound()</a></code></pre>
 
 <br></br>
 
@@ -166,9 +146,7 @@ Negative dimensions are not allowed.
 ### overlap/2 ###
 
 
-<pre><code>
-overlap(X1::<a href="#type-bound">bound()</a>, X2::<a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>overlap(X1::<a href="#type-bound">bound()</a>, X2::<a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -180,9 +158,7 @@ If these bounds have no intersection, the result will be 0.
 ### unify/2 ###
 
 
-<pre><code>
-unify(B0::empty | <a href="#type-bound">bound()</a>, B1::empty | <a href="#type-bound">bound()</a>) -&gt; empty | <a href="#type-bound">bound()</a>
-</code></pre>
+<pre><code>unify(B0::empty | <a href="#type-bound">bound()</a>, B1::empty | <a href="#type-bound">bound()</a>) -&gt; empty | <a href="#type-bound">bound()</a></code></pre>
 
 <br></br>
 
@@ -194,9 +170,7 @@ The resulting bound is optimal one in terms of area.
 ### upperright/1 ###
 
 
-<pre><code>
-upperright(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}
-</code></pre>
+<pre><code>upperright(X1::<a href="#type-bound">bound()</a>) -&gt; {number(), number()}</code></pre>
 
 <br></br>
 
@@ -207,9 +181,7 @@ Returns coordinates of the upper right point of a bound.
 ### x1/1 ###
 
 
-<pre><code>
-x1(X1::<a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>x1(X1::<a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -220,9 +192,7 @@ Returns lower coordinate of a bound on the X axis.
 ### x2/1 ###
 
 
-<pre><code>
-x2(X1::<a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>x2(X1::<a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -233,9 +203,7 @@ Returns upper coordinate of a bound on the X axis.
 ### y1/1 ###
 
 
-<pre><code>
-y1(X1::<a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>y1(X1::<a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -246,9 +214,7 @@ Returns lower coordinate of a bound on the Y axis.
 ### y2/1 ###
 
 
-<pre><code>
-y2(X1::<a href="#type-bound">bound()</a>) -&gt; number()
-</code></pre>
+<pre><code>y2(X1::<a href="#type-bound">bound()</a>) -&gt; number()</code></pre>
 
 <br></br>
 

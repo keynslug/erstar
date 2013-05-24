@@ -25,9 +25,7 @@ Small collection of functions useful to measure some aspects of R* trees.
 ### depth/1 ###
 
 
-<pre><code>
-depth(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; pos_integer()
-</code></pre>
+<pre><code>depth(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; pos_integer()</code></pre>
 
 <br></br>
 
@@ -42,9 +40,7 @@ That is a level where leafs reside assuming level of the root node is 1.
 ### total_area_by_level/1 ###
 
 
-<pre><code>
-total_area_by_level(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [{pos_integer(), number()}]
-</code></pre>
+<pre><code>total_area_by_level(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [{pos_integer(), number()}]</code></pre>
 
 <br></br>
 
@@ -60,9 +56,7 @@ Lesser values mean more effective storage utilization.
 ### total_overlap_by_level/1 ###
 
 
-<pre><code>
-total_overlap_by_level(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [{pos_integer(), number()}]
-</code></pre>
+<pre><code>total_overlap_by_level(RTree::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [{pos_integer(), number()}]</code></pre>
 
 <br></br>
 

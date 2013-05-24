@@ -22,9 +22,7 @@
 ### render/1 ###
 
 
-<pre><code>
-render(RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; list()
-</code></pre>
+<pre><code>render(RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; list()</code></pre>
 
 <br></br>
 
@@ -35,9 +33,7 @@ Visualises any R* tree in an opaque internal format.
 ### render/2 ###
 
 
-<pre><code>
-render(To::svg, RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; iolist()
-</code></pre>
+<pre><code>render(To::svg, RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; iolist()</code></pre>
 
 <br></br>
 
@@ -49,9 +45,7 @@ The only available external format is `svg`.
 ### render_to_file/3 ###
 
 
-<pre><code>
-render_to_file(Filename::string(), To::svg, RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; ok | {error, atom()}
-</code></pre>
+<pre><code>render_to_file(Filename::string(), To::svg, RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; ok | {error, atom()}</code></pre>
 
 <br></br>
 

@@ -40,9 +40,7 @@ radians far from the given point on a sphere.</td></tr><tr><td valign="top"><a h
 ### around/4 ###
 
 
-<pre><code>
-around(Phi::number(), Lambda::number(), CloserThan::number(), RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [<a href="erstar.md#type-treeleaf">erstar:treeleaf()</a>]
-</code></pre>
+<pre><code>around(Phi::number(), Lambda::number(), CloserThan::number(), RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [<a href="erstar.md#type-treeleaf">erstar:treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -57,9 +55,7 @@ Distance to a bound is said to be the distance to its midpoint.
 ### deg_to_rad/1 ###
 
 
-<pre><code>
-deg_to_rad(A::number()) -&gt; float()
-</code></pre>
+<pre><code>deg_to_rad(A::number()) -&gt; float()</code></pre>
 
 <br></br>
 
@@ -70,9 +66,7 @@ Converts degrees to radians.
 ### distance/4 ###
 
 
-<pre><code>
-distance(Phi1::number(), Lambda1::number(), Phi2::number(), Lambda2::number()) -&gt; number()
-</code></pre>
+<pre><code>distance(Phi1::number(), Lambda1::number(), Phi2::number(), Lambda2::number()) -&gt; number()</code></pre>
 
 <br></br>
 
@@ -84,9 +78,7 @@ coordinates in radians. Returned value expressed in great circle arc radians.
 ### inbetween/5 ###
 
 
-<pre><code>
-inbetween(Phi::number(), Lambda::number(), FartherThan::number(), CloserThan::number(), RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [<a href="erstar.md#type-treeleaf">erstar:treeleaf()</a>]
-</code></pre>
+<pre><code>inbetween(Phi::number(), Lambda::number(), FartherThan::number(), CloserThan::number(), RStar::<a href="erstar.md#type-rtree">erstar:rtree()</a>) -&gt; [<a href="erstar.md#type-treeleaf">erstar:treeleaf()</a>]</code></pre>
 
 <br></br>
 
@@ -101,9 +93,7 @@ Distance to a bound is said to be the distance to its midpoint.
 ### rad_to_deg/1 ###
 
 
-<pre><code>
-rad_to_deg(A::number()) -&gt; float()
-</code></pre>
+<pre><code>rad_to_deg(A::number()) -&gt; float()</code></pre>
 
 <br></br>
 
