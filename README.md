@@ -47,6 +47,42 @@ RTree3 = erstar:insert(erstar_bound:new(1.1, 18, 5, 5), {rect_data, 3}, RTree2),
 ```
 
 
+#### <a name="Queries">Queries</a> ####
+
+Erstar supports four types of queries to find stored data by its location:
+
+* point query (`at/3`) - returns tree leaf right under the given point.
+* rectangle query (`locate/2`, `locate/3`) - returns all tree leaves falling into given rectangular bound, either fully enclosed inside or crossed over just a part of it (depending on the first argument in `locate/3`).
+* circular query (`around/4`) - returns all leaves which are closer than given distance to the given point, effectively falling into circle with the distance as its radius.
+* annulus query (`inbetween/5`) - returns all leaves which are farther than first given distance but closer than second one to the given point, effectively falling into annulus with distances as its small and great radiuses.
+
+
+#### <a name="Geo_locations">Geo locations</a> ####
+
+Erstar supports storing geospatial information expressed in terms of spherical coordinates, commonly known as latitude and longitude, with respect of sphere curvature. These are widely used to express locations on the surface of the Earth. All the hard work done by `erstar_geo` module.
+
+This module supports two location queries, aware of spherical coordinates and curvature:
+
+* circular query (`around/4`) - returns all leaves which are closer than given distance to the given point, where distance is measured along the closest path between two points on the surface of sphere.
+* annulus query (`inbetween/5`) - returns all leaves which are farther than first given distance but closer than second one to the given point, where distance is measured along the closest path between two points on the surface of sphere.
+
+The closest path distance between two points is known as [great-circle distance](http://en.wikipedia.org/wiki/Great-circle_distance).
+
+To properly use these queries one should assure that all locations in a tree are inside valid ranges, otherwise query results may be incorrect. When expressed in degrees, valid range for latitude is from -90 to 90, and for longitude is from -180 to 180.
+
+
+#### <a name="Native_extensions">Native extensions</a> ####
+
+Erstar provides a way to enable native extensions through NIFs. These are designed to speed up a couple of most time-consuming yet small-scale activities. For now, it is not supposed to fully reimplement Erstar through NIFs.
+
+Speedups are notable: insertion times are 2 to 10 times faster depending on a tree parameters and geolocation queries are 2 to 3 times faster. However, these magnitudes are approximate and measured on the synthetic datasets, thus one should decide to use them or not on its own.
+
+Native extensions are enabled with `ERSTAR_NIFEXT` env variable, like that:
+
+```
+ERSTAR_NIFEXT=1 make
+```
+
 <script>
 // Jump directly to a referenced url given in trailing '[]:...'-notation
 function goto(tag) { parent.document.location.href = url(tag); }
