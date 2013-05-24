@@ -34,5 +34,5 @@ dialyzer:
 
 ci: compile test
 
-docs:
-	$(REBAR) doc
+doc:
+	$(REBAR) -C docs.config get-deps compile doc
