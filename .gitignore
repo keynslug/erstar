@@ -2,7 +2,6 @@ ebin
 deps
 doc/README.md
 doc/*.png
-doc/*.css
 erl_crash.dump
 .eunit
 logs
