@@ -1,6 +1,6 @@
 {application, erstar, [
     {description, "Erlang R*-Tree implementation"},
-    {vsn, "0.1.0"},
+    {vsn, "0.1.3"},
     {registered, []},
     {applications, [
         kernel,
