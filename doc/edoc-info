@@ -1,0 +1,5 @@
+%% encoding: UTF-8
+{application,erstar}.
+{packages,[]}.
+{modules,[erstar,erstar_bound,erstar_geo,erstar_metrics,erstar_svg,
+          erstar_utils]}.
