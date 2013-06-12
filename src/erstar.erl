@@ -59,7 +59,7 @@
 -type rtree() ::
     {?MODULE, {pos_integer(), pos_integer(), pos_integer(), non_neg_integer()}, treenode()}.
 
--export_type([rtree/0]).
+-export_type([rtree/0, treeleaf/0, treenode/0]).
 
 %%
 

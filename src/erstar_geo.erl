@@ -115,7 +115,7 @@ rad_to_deg(A) ->
 %% @doc Measures distance between two points on a sphere, given its spherical
 %% coordinates in radians. Returned value expressed in great circle arc radians.
 
--spec distance(number(), number(), number(), number()) -> number().
+-spec distance(number(), number(), number(), number()) -> float().
 
 distance(Phi1, Lambda1, Phi2, Lambda2) ->
     DLambda = Lambda2 - Lambda1,
