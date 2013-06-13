@@ -227,11 +227,13 @@ foldwide(Fun, Acc, {?MODULE, _, Root}) ->
 %% @doc Walks over nodes and leaves in a tree, effectively gathering list of
 %% leaves accepted by the user-defined function.
 %% User-defined function should decide, given entry type and its bound, if a node
-%% should be visited or a leaf should appear in the result.
+%% should be visited, should be walked over as a whole (as if to decide to walk over
+%% any descendants of this node unconditionally), or a leaf should appear in
+%% the result.
 %% If you want to issue some specific locate query on a tree, start here.
 
 -spec walk(WalkFun, rtree()) -> [treeleaf()] when
-    WalkFun :: fun((node | leaf, erstar_bound:bound()) -> boolean()).
+    WalkFun :: fun((node | leaf, erstar_bound:bound()) -> false | true | true_for_all).
 
 walk(_WalkFun, {?MODULE, _, {_, _, []}}) ->
     [];
@@ -353,11 +355,15 @@ closer_than(node, {X1, Y1, X2, Y2}, RX, RY, Dist, Dist2) ->
     HH = (Y2 - Y1) / 2,
     DX = abs(X1 + HW - RX),
     DY = abs(Y1 + HH - RY),
+    FX = DX + HW,
+    FY = DY + HH,
     if
         DX > HW + Dist ->
             false;
         DY > HH + Dist ->
             false;
+        FX * FX + FY * FY =< Dist2 ->
+            true_for_all;
         DX =< HW ->
             true;
         DY =< HH ->
@@ -375,16 +381,37 @@ closer_than(leaf, Bound, RX, RY, _, Dist2) ->
     DY = CY - RY,
     (DX * DX + DY * DY) =< Dist2.
 
-in_between(node, Bound = {X1, Y1, X2, Y2}, RX, RY, FT2, CT, CT2) ->
-    closer_than(node, Bound, RX, RY, CT, CT2) andalso begin
-        CX = (X1 + X2) / 2,
-        CY = (Y1 + Y2) / 2,
-        HW = (X2 - X1) / 2,
-        HH = (Y2 - Y1) / 2,
-        DX = abs(RX - CX) + HW,
-        DY = abs(RY - CY) + HH,
-        D2 = DX * DX + DY * DY,
-        D2 > FT2
+in_between(node, {X1, Y1, X2, Y2}, RX, RY, FT2, CT, CT2) ->
+    HW = (X2 - X1) / 2,
+    HH = (Y2 - Y1) / 2,
+    DX = abs(X1 + HW - RX),
+    DY = abs(Y1 + HH - RY),
+    FX = DX + HW,
+    FY = DY + HH,
+    CX = max(DX - HW, 0),
+    CY = max(DY - HH, 0),
+    FD2 = FX * FX + FY * FY,
+    if
+        FD2 < FT2 ->
+            false;
+        CX > CT ->
+            false;
+        CY > CT ->
+            false;
+        FD2 =< CT2 ->
+            if
+                CX * CX + CY * CY >= FT2 ->
+                    true_for_all;
+                true ->
+                    true
+            end;
+        CX =< 0 ->
+            true;
+        CY =< 0 ->
+            true;
+        true ->
+            CD2 = CX * CX + CY * CY,
+            CD2 =< CT2
     end;
 
 in_between(leaf, Bound, RX, RY, FT2, _, CT2) ->
@@ -727,11 +754,23 @@ walk_node(Walk, Acc, Node) ->
 walk_node(true, Walk, Acc, {_, _, Children}) ->
     walk_node(Walk, Acc, Children);
 
+walk_node(true_for_all, _Walk, Acc, {_, _, Children}) ->
+    walk_leaves(Children, Acc);
+
 walk_node(true, _Walk, Acc, Leaf) ->
     [Leaf | Acc];
 
 walk_node(false, _Walk, Acc, _Any) ->
     Acc.
+
+walk_leaves([], Acc) ->
+    Acc;
+
+walk_leaves([{_, _, Nodes} | Rest], Acc) ->
+    walk_leaves(Rest, walk_leaves(Nodes, Acc));
+
+walk_leaves(Leaves, Acc) ->
+    Leaves ++ Acc.
 
 %%
 
