@@ -35,20 +35,24 @@
 //
 // Module-wide activities
 
-static ERL_NIF_TERM NODE;
-static ERL_NIF_TERM LEAF;
-static ERL_NIF_TERM E_TRUE;
+static ERL_NIF_TERM E_NODE;
+static ERL_NIF_TERM E_LEAF;
 static ERL_NIF_TERM E_FALSE;
-static ERL_NIF_TERM UNDEFINED;
+static ERL_NIF_TERM E_TRUE;
+static ERL_NIF_TERM E_TRUE_FOR_ALL;
+
+typedef struct {
+    double phi1, lambda1, phi2, lambda2;
+} erstar_bound;
 
 inline ERL_NIF_TERM atom(ErlNifEnv * env, const char * name);
 
 static int on_load(ErlNifEnv * env, void ** priv, ERL_NIF_TERM info) {
-    NODE = atom(env, "node");
-    LEAF = atom(env, "leaf");
-    E_TRUE = atom(env, "true");
+    E_NODE = atom(env, "node");
+    E_LEAF = atom(env, "leaf");
     E_FALSE = atom(env, "false");
-    UNDEFINED = atom(env, "undefined");
+    E_TRUE = atom(env, "true");
+    E_TRUE_FOR_ALL = atom(env, "true_for_all");
     return 0;
 }
 
@@ -66,6 +70,23 @@ inline int get_coerce_double(ErlNifEnv * env, ERL_NIF_TERM arg, double * dp) {
     return enif_get_double(env, arg, dp) || (
         enif_get_int64(env, arg, &i64) && (*dp = (double)(i64), 1)
     );
+}
+
+inline int get_bound(ErlNifEnv * env, ERL_NIF_TERM arg, erstar_bound * bp) {
+
+    int arity;
+    const ERL_NIF_TERM * tuple;
+
+    if (enif_get_tuple(env, arg, &arity, &tuple) && arity == 4) {
+        return
+            get_coerce_double(env, tuple[0], &(bp->phi1)) &&
+            get_coerce_double(env, tuple[1], &(bp->lambda1)) &&
+            get_coerce_double(env, tuple[2], &(bp->phi2)) &&
+            get_coerce_double(env, tuple[3], &(bp->lambda2));
+    }
+
+    return 0;
+
 }
 
 inline ERL_NIF_TERM atom(ErlNifEnv * env, const char * name) {
@@ -88,14 +109,50 @@ inline ERL_NIF_TERM atom(ErlNifEnv * env, const char * name) {
 #define MAX(a, b) \
     ((a) < (b) ? (b) : (a))
 
-#define INTERSECTS(a1, b1, a2, b2) \
-    MAX(a1, a2) <= MIN(b1, b2)
+inline int has_intersection(const erstar_bound * a, const erstar_bound * b) {
+
+    double max_phi1, min_phi2, max_lambda1, min_lambda2;
+
+    max_phi1 = MAX(a->phi1, b->phi1);
+    min_phi2 = MIN(b->phi2, a->phi2);
+
+    if (max_phi1 < min_phi2) {
+        max_lambda1 = MAX(a->lambda1, b->lambda1);
+        min_lambda2 = MIN(b->lambda2, a->lambda2);
+        if (max_lambda1 < min_lambda2) {
+            return (
+                max_phi1 == a->phi1 && min_phi2 == a->phi2 &&
+                max_lambda1 == a->lambda1 && min_lambda2 == a->lambda2
+            ) ? 2 : 1;
+        }
+        if (b->lambda1 < -M_PI) {
+            max_lambda1 = MAX(b->lambda1 + M_PI * 2.0, a->lambda1);
+            min_lambda2 = MIN(a->lambda2, b->lambda2 + M_PI * 2.0);
+            return (max_lambda1 < min_lambda2) ? 1 : 0;
+        }
+        if (b->lambda2 > M_PI) {
+            max_lambda1 = MAX(b->lambda1 - M_PI * 2.0, a->lambda1);
+            min_lambda2 = MIN(a->lambda2, b->lambda2 - M_PI * 2.0);
+            return (max_lambda1 < min_lambda2) ? 1 : 0;
+        }
+    }
+
+    return 0;
+
+}
+
+inline int inside_small_circle(const erstar_bound * b, double phi, double lambda, double d) {
+    return
+        distance(b->phi1, b->lambda1, phi, lambda) <= d &&
+        distance(b->phi2, b->lambda2, phi, lambda) <= d &&
+        distance(b->phi1, b->lambda2, phi, lambda) <= d &&
+        distance(b->phi2, b->lambda1, phi, lambda) <= d;
+}
 
 static ERL_NIF_TERM _distance(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
 
     double phi1, lambda1, phi2, lambda2;
 
-    FAIL_ON_ERROR(argc == 4);
     FAIL_ON_ERROR(get_coerce_double(env, argv[0], &phi1));
     FAIL_ON_ERROR(get_coerce_double(env, argv[1], &lambda1));
     FAIL_ON_ERROR(get_coerce_double(env, argv[2], &phi2));
@@ -110,7 +167,6 @@ static ERL_NIF_TERM _small_circle_extents(ErlNifEnv * env, int argc, const ERL_N
     double phi, lambda, d;
     double phi1, lambda1, phi2, lambda2;
 
-    FAIL_ON_ERROR(argc == 3);
     FAIL_ON_ERROR(get_coerce_double(env, argv[0], &phi));
     FAIL_ON_ERROR(get_coerce_double(env, argv[1], &lambda));
     FAIL_ON_ERROR(get_coerce_double(env, argv[2], &d));
@@ -127,56 +183,27 @@ static ERL_NIF_TERM _small_circle_extents(ErlNifEnv * env, int argc, const ERL_N
 
 static ERL_NIF_TERM _closer_than(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
 
-    int arity;
-    const ERL_NIF_TERM * tuple;
-
     double phi, lambda, d;
-    struct { double phi1, lambda1, phi2, lambda2; } b, ex;
+    erstar_bound b, ex;
 
-    FAIL_ON_ERROR(argc == 6);
-    FAIL_ON_ERROR(enif_get_tuple(env, argv[1], &arity, &tuple));
-    FAIL_ON_ERROR(arity == 4);
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[0], &b.phi1));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[1], &b.lambda1));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[2], &b.phi2));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[3], &b.lambda2));
+    FAIL_ON_ERROR(get_bound(env, argv[1], &b));
     FAIL_ON_ERROR(get_coerce_double(env, argv[3], &phi));
     FAIL_ON_ERROR(get_coerce_double(env, argv[4], &lambda));
-
-    if (enif_is_identical(argv[0], NODE)) {
-
-        if (phi >= b.phi1 && phi <= b.phi2 && lambda >= b.lambda1 && lambda <= b.lambda2) {
-            return E_TRUE;
-        }
-
-        FAIL_ON_ERROR(enif_get_tuple(env, argv[2], &arity, &tuple));
-        FAIL_ON_ERROR(arity == 4);
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[0], &ex.phi1));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[1], &ex.lambda1));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[2], &ex.phi2));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[3], &ex.lambda2));
-
-        if (INTERSECTS(b.phi1, b.phi2, ex.phi1, ex.phi2)) {
-            if (INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2)) {
-                return E_TRUE;
-            }
-            if (ex.lambda1 < -M_PI) {
-                ex.lambda1 += M_PI * 2.0;
-                ex.lambda2 += M_PI * 2.0;
-                return INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2) ? E_TRUE : E_FALSE;
-            }
-            if (ex.lambda2 > M_PI) {
-                ex.lambda1 -= M_PI * 2.0;
-                ex.lambda2 -= M_PI * 2.0;
-                return INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2) ? E_TRUE : E_FALSE;
-            }
-        }
-
-        return E_FALSE;
-
-    }
-
     FAIL_ON_ERROR(get_coerce_double(env, argv[5], &d));
+
+    if (enif_is_identical(argv[0], E_NODE)) {
+        FAIL_ON_ERROR(get_bound(env, argv[2], &ex));
+        switch (has_intersection(&b, &ex)) {
+            case 2:
+                if (inside_small_circle(&b, phi, lambda, d)) {
+                    return E_TRUE_FOR_ALL;
+                }
+            case 1:
+                return E_TRUE;
+            default:
+                return E_FALSE;
+        }
+    }
 
     return (distance((b.phi1 + b.phi2) / 2.0, (b.lambda1 + b.lambda2) / 2.0, phi, lambda) > d) ?
         E_FALSE : E_TRUE;
@@ -185,72 +212,63 @@ static ERL_NIF_TERM _closer_than(ErlNifEnv * env, int argc, const ERL_NIF_TERM a
 
 static ERL_NIF_TERM _in_between(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[]) {
 
-    int arity;
-    const ERL_NIF_TERM * tuple;
-
     double phi, lambda, far_d, close_d, midpoint_d;
-    struct { double phi1, lambda1, phi2, lambda2; } b, ex;
+    erstar_bound b, ex;
 
-    FAIL_ON_ERROR(argc == 7);
-    FAIL_ON_ERROR(enif_get_tuple(env, argv[1], &arity, &tuple));
-    FAIL_ON_ERROR(arity == 4);
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[0], &b.phi1));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[1], &b.lambda1));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[2], &b.phi2));
-    FAIL_ON_ERROR(get_coerce_double(env, tuple[3], &b.lambda2));
+    FAIL_ON_ERROR(get_bound(env, argv[1], &b));
     FAIL_ON_ERROR(get_coerce_double(env, argv[3], &phi));
     FAIL_ON_ERROR(get_coerce_double(env, argv[4], &lambda));
     FAIL_ON_ERROR(get_coerce_double(env, argv[5], &far_d));
     FAIL_ON_ERROR(get_coerce_double(env, argv[6], &close_d));
 
-    if (enif_is_identical(argv[0], NODE)) {
+    if (enif_is_identical(argv[0], E_NODE)) {
 
-        if (phi >= b.phi1 && phi <= b.phi2 && lambda >= b.lambda1 && lambda <= b.lambda2) {
-            goto not_inside;
-        }
+        FAIL_ON_ERROR(get_bound(env, argv[2], &ex));
 
-        FAIL_ON_ERROR(enif_get_tuple(env, argv[2], &arity, &tuple));
-        FAIL_ON_ERROR(arity == 4);
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[0], &ex.phi1));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[1], &ex.lambda1));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[2], &ex.phi2));
-        FAIL_ON_ERROR(get_coerce_double(env, tuple[3], &ex.lambda2));
+        int i = 0, m = 0;
+        double d[4];
 
-        if (INTERSECTS(b.phi1, b.phi2, ex.phi1, ex.phi2)) {
-            if (INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2)) {
-                goto not_inside;
-            }
-            if (ex.lambda1 < -M_PI) {
-                ex.lambda1 += M_PI * 2.0;
-                ex.lambda2 += M_PI * 2.0;
-                if (INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2)) {
-                    goto not_inside;
+        switch (has_intersection(&b, &ex)) {
+            case 2:
+                d[0] = distance(b.phi1, b.lambda1, phi, lambda);
+                if (d[0] > close_d) {
+                    return E_TRUE;
                 }
-            }
-            if (ex.lambda2 > M_PI) {
-                ex.lambda1 -= M_PI * 2.0;
-                ex.lambda2 -= M_PI * 2.0;
-                if (INTERSECTS(b.lambda1, b.lambda2, ex.lambda1, ex.lambda2)) {
-                    goto not_inside;
+                d[1] = distance(b.phi2, b.lambda2, phi, lambda);
+                if (d[1] > close_d) {
+                    return E_TRUE;
                 }
-            }
+                d[2] = distance(b.phi1, b.lambda2, phi, lambda);
+                if (d[2] > close_d) {
+                    return E_TRUE;
+                }
+                d[3] = distance(b.phi2, b.lambda1, phi, lambda);
+                if (d[3] > close_d) {
+                    return E_TRUE;
+                }
+                for (; i < 4; ++i) {
+                    m += d[i] < far_d ? 0 : 1;
+                }
+                if (0 == m) {
+                    return E_FALSE;
+                }
+                if (
+                    4 == m &&
+                    (b.phi1 - phi) * (b.phi2 - phi) > 0 &&
+                    (b.lambda1 - lambda) * (b.lambda2 - lambda) > 0
+                ) {
+                    return E_TRUE_FOR_ALL;
+                }
+            case 1:
+                return E_TRUE;
+            default:
+                return E_FALSE;
         }
-
-        return E_FALSE;
 
     }
 
     midpoint_d = distance((b.phi1 + b.phi2) / 2.0, (b.lambda1 + b.lambda2) / 2.0, phi, lambda);
     return (midpoint_d >= far_d && midpoint_d <= close_d) ? E_TRUE : E_FALSE;
-
-not_inside:
-
-    return (
-        distance(b.phi1, b.lambda1, phi, lambda) >= far_d ||
-        distance(b.phi2, b.lambda2, phi, lambda) >= far_d ||
-        distance(b.phi1, b.lambda2, phi, lambda) >= far_d ||
-        distance(b.phi2, b.lambda1, phi, lambda) >= far_d
-    ) ? E_TRUE : E_FALSE;
 
 }
 
