@@ -153,7 +153,7 @@ closer_than(leaf, Bound, _Extents, RPhi, RLambda, Dist) ->
     {CPhi, CLambda} = erstar_bound:center(Bound),
     distance(CPhi, CLambda, RPhi, RLambda) =< Dist.
 
-in_between(node, Bound, Extents, RPhi, RLambda, FDist, CDist) ->
+in_between(node, Bound = {Phi1, Lambda1, Phi2, Lambda2}, Extents, RPhi, RLambda, FDist, CDist) ->
     case has_small_circle_extent_overlap(Extents, Bound) of
         none ->
             false;
@@ -164,7 +164,14 @@ in_between(node, Bound, Extents, RPhi, RLambda, FDist, CDist) ->
                 0 ->
                     false;
                 8 ->
-                    true_for_all;
+                    if
+                        (RPhi - Phi1) * (RPhi - Phi2) < 0 ->
+                            true;
+                        (RLambda - Lambda1) * (RLambda - Lambda2) < 0 ->
+                            true;
+                        true ->
+                            true_for_all
+                    end;
                 _ ->
                     true
             end
@@ -255,7 +262,7 @@ points_between_small_circles([P, L | Rest], Phi, Lambda, FDist, CDist, N) ->
     Dist = distance(Phi, Lambda, P, L),
     if
         Dist > CDist ->
-            points_between_small_circles(Rest, Phi, Lambda, FDist, CDist, N + 1);
+            N + 1;
         Dist >= FDist ->
             points_between_small_circles(Rest, Phi, Lambda, FDist, CDist, N + 2);
         true ->
