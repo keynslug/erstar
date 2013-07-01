@@ -50,7 +50,7 @@ Implementation of R* tree data structure.
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#around-4">around/4</a></td><td>Locates all the leaves which are closer than <code>CloserThan</code> units to
-the given point.</td></tr><tr><td valign="top"><a href="#at-3">at/3</a></td><td>Locates all the leaves which contain the given point in its bound.</td></tr><tr><td valign="top"><a href="#fold-3">fold/3</a></td><td>Folds over entire tree in a depth-first traversal.</td></tr><tr><td valign="top"><a href="#foldwide-3">foldwide/3</a></td><td>Folds over entire tree in a breadth-first traversal.</td></tr><tr><td valign="top"><a href="#inbetween-5">inbetween/5</a></td><td>Locates all the leaves which are in between <code>FartherThan</code> and <code>ButCloserThan</code>
+the given point.</td></tr><tr><td valign="top"><a href="#at-3">at/3</a></td><td>Locates all the leaves which contain the given point in its bound.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td>Removes all leaves from a tree.</td></tr><tr><td valign="top"><a href="#fold-3">fold/3</a></td><td>Folds over entire tree in a depth-first traversal.</td></tr><tr><td valign="top"><a href="#foldwide-3">foldwide/3</a></td><td>Folds over entire tree in a breadth-first traversal.</td></tr><tr><td valign="top"><a href="#inbetween-5">inbetween/5</a></td><td>Locates all the leaves which are in between <code>FartherThan</code> and <code>ButCloserThan</code>
 units far from the given point.</td></tr><tr><td valign="top"><a href="#insert-2">insert/2</a></td><td>Inserts a bulk of leafs simultaneously.</td></tr><tr><td valign="top"><a href="#insert-3">insert/3</a></td><td>Inserts new leaf into an R* tree, given its bound and arbitrary term
 to associate with it.</td></tr><tr><td valign="top"><a href="#instance-1">instance/1</a></td><td>Verifies that the given term is an R* tree.</td></tr><tr><td valign="top"><a href="#leaves-1">leaves/1</a></td><td>Gathers plain list of all leaves in an R* tree.</td></tr><tr><td valign="top"><a href="#locate-2">locate/2</a></td><td>Locates all the leaves getting inside the given bound.</td></tr><tr><td valign="top"><a href="#locate-3">locate/3</a></td><td>Locates all the leaves enclosed inside or overlapping the given bound.</td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates an empty R* tree with specific maximum node capacity.</td></tr><tr><td valign="top"><a href="#new-2">new/2</a></td><td>Creates an empty R* tree with specific minimum and maximum node capacity.</td></tr><tr><td valign="top"><a href="#new-4">new/4</a></td><td>Creates an empty R* tree with specific node capacities, choose-subtree cutout
 value and reinserts count.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Removes the bulk of leaves with a single call.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td>Removes the leaf from an R* tree, given its bound and arbitrary term.</td></tr><tr><td valign="top"><a href="#size-1">size/1</a></td><td>Computes the size of an R* tree.</td></tr><tr><td valign="top"><a href="#walk-2">walk/2</a></td><td>Walks over nodes and leaves in a tree, effectively gathering list of
@@ -88,6 +88,17 @@ Distance to a bound is said to be the distance to its center.
 Locates all the leaves which contain the given point in its bound.
 
 __See also:__ [locate/3](#locate-3).
+<a name="clear-1"></a>
+
+### clear/1 ###
+
+
+<pre><code>clear(X1::<a href="#type-rtree">rtree()</a>) -&gt; <a href="#type-rtree">rtree()</a></code></pre>
+
+<br></br>
+
+
+Removes all leaves from a tree.
 <a name="fold-3"></a>
 
 ### fold/3 ###
@@ -327,12 +338,14 @@ of the whole tree.
 
 <pre><code>walk(WalkFun, X2::<a href="#type-rtree">rtree()</a>) -&gt; [<a href="#type-treeleaf">treeleaf()</a>]</code></pre>
 
-<ul class="definitions"><li><code>WalkFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>) -&gt; boolean())</code></li></ul>
+<ul class="definitions"><li><code>WalkFun = fun((node | leaf, <a href="erstar_bound.md#type-bound">erstar_bound:bound()</a>) -&gt; false | true | true_for_all)</code></li></ul>
 
 Walks over nodes and leaves in a tree, effectively gathering list of
 leaves accepted by the user-defined function.
 User-defined function should decide, given entry type and its bound, if a node
-should be visited or a leaf should appear in the result.
+should be visited, should be walked over as a whole (as if to decide to walk over
+any descendants of this node unconditionally), or a leaf should appear in
+the result.
 If you want to issue some specific locate query on a tree, start here.
 <a name="walkfold-3"></a>
 

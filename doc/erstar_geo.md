@@ -66,7 +66,7 @@ Converts degrees to radians.
 ### distance/4 ###
 
 
-<pre><code>distance(Phi1::number(), Lambda1::number(), Phi2::number(), Lambda2::number()) -&gt; number()</code></pre>
+<pre><code>distance(Phi1::number(), Lambda1::number(), Phi2::number(), Lambda2::number()) -&gt; float()</code></pre>
 
 <br></br>
 
