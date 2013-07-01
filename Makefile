@@ -1,7 +1,7 @@
 APP=erstar
 REBAR ?= $(shell which rebar 2>/dev/null || which ./rebar)
 
-.PHONY: test
+.PHONY: doc test
 
 all: compile
 
