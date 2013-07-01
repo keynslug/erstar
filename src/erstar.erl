@@ -38,6 +38,7 @@
     insert/2,
     remove/3,
     remove/2,
+    clear/1,
     fold/3,
     foldwide/3,
     walk/2,
@@ -195,6 +196,14 @@ remove(Bound, Data, RStar = {?MODULE, Params, Root0}) ->
 remove(Leaves, RStar = {?MODULE, Params, Root0}) ->
     Root = remove_bulk(Leaves, Root0, [], Params),
     update_root(RStar, Root, Params).
+
+%%
+%% @doc Removes all leaves from a tree.
+
+-spec clear(rtree()) -> rtree().
+
+clear({?MODULE, Params, _Root}) ->
+    {?MODULE, Params, newnode()}.
 
 %%
 %% @doc Folds over entire tree in a depth-first traversal.
