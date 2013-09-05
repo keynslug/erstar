@@ -47,6 +47,8 @@
     distance/4
 ]).
 
+-define(PI, 3.141592653589793).
+
 -ifdef(NIFEXT).
 
 -on_load(init/0).
@@ -88,6 +90,12 @@ around(Phi, Lambda, CloserThan, RStar) ->
 
 -spec inbetween(number(), number(), number(), number(), erstar:rtree()) -> [erstar:treeleaf()].
 
+inbetween(Phi, Lambda, FartherThan, CloserThan, RStar) when FartherThan > ?PI / 2.0, Lambda > 0.0 ->
+    inbetween(-Phi, Lambda - ?PI, ?PI - CloserThan, ?PI - FartherThan, RStar);
+
+inbetween(Phi, Lambda, FartherThan, CloserThan, RStar) when FartherThan > ?PI / 2.0 ->
+    inbetween(-Phi, Lambda + ?PI, ?PI - CloserThan, ?PI - FartherThan, RStar);
+
 inbetween(Phi, Lambda, FartherThan, CloserThan, RStar) ->
     Extents = small_circle_extents(Phi, Lambda, CloserThan),
     erstar:walk(fun (Type, Bound) ->
@@ -95,8 +103,6 @@ inbetween(Phi, Lambda, FartherThan, CloserThan, RStar) ->
     end, RStar).
 
 %%
-
--define(PI, 3.141592653589793).
 
 %% @doc Converts degrees to radians.
 
