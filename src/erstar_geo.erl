@@ -170,13 +170,18 @@ in_between(node, Bound = {Phi1, Lambda1, Phi2, Lambda2}, Extents, RPhi, RLambda,
                 0 ->
                     false;
                 8 ->
-                    if
-                        (RPhi - Phi1) * (RPhi - Phi2) < 0 ->
-                            true;
-                        (RLambda - Lambda1) * (RLambda - Lambda2) < 0 ->
-                            true;
+                    case is_posneg(RPhi - Phi1, RPhi - Phi2) of
                         true ->
-                            true_for_all
+                            true;
+                        false ->
+                            DLambda1 = RLambda - Lambda1,
+                            DLambda2 = RLambda - Lambda2,
+                            case is_posneg(clamp_lambda(DLambda1), clamp_lambda(DLambda2)) of
+                                true ->
+                                    true;
+                                false ->
+                                    true_for_all
+                            end
                     end;
                 _ ->
                     true
@@ -187,6 +192,26 @@ in_between(leaf, Bound, _Extents, RPhi, RLambda, FDist, CDist) ->
     {CPhi, CLambda} = erstar_bound:center(Bound),
     Dist = distance(CPhi, CLambda, RPhi, RLambda),
     Dist =< CDist andalso Dist >= FDist.
+
+%%
+
+clamp_lambda(Lambda) when Lambda > ?PI ->
+    Lambda - ?PI * 2;
+
+clamp_lambda(Lambda) when Lambda < -?PI ->
+    Lambda + ?PI * 2;
+
+clamp_lambda(Lambda) ->
+    Lambda.
+
+is_posneg(X, Y) when X > 0 andalso Y < 0 ->
+    true;
+
+is_posneg(Y, X) when X > 0 andalso Y < 0 ->
+    true;
+
+is_posneg(_, _) ->
+    false.
 
 %%
 

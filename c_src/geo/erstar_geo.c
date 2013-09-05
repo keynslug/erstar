@@ -109,6 +109,16 @@ inline ERL_NIF_TERM atom(ErlNifEnv * env, const char * name) {
 #define MAX(a, b) \
     ((a) < (b) ? (b) : (a))
 
+inline double clamp_lambda(double l) {
+    if (l > M_PI) {
+        return l - M_PI * 2.0;
+    }
+    if (l < -M_PI) {
+        return l + M_PI * 2.0;
+    }
+    return l;
+}
+
 inline int has_intersection(const erstar_bound * a, const erstar_bound * b) {
 
     double max_phi1, min_phi2, max_lambda1, min_lambda2;
@@ -254,8 +264,8 @@ static ERL_NIF_TERM _in_between(ErlNifEnv * env, int argc, const ERL_NIF_TERM ar
                 }
                 if (
                     4 == m &&
-                    (b.phi1 - phi) * (b.phi2 - phi) > 0 &&
-                    (b.lambda1 - lambda) * (b.lambda2 - lambda) > 0
+                    signbit(b.phi1 - phi) ^ signbit(b.phi2 - phi) &&
+                    signbit(clamp_lambda(b.lambda1 - lambda)) ^ signbit(clamp_lambda(b.lambda2 - lambda))
                 ) {
                     return E_TRUE_FOR_ALL;
                 }
