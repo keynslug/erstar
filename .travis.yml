@@ -1,0 +1,8 @@
+language: erlang
+sudo: false
+otp_release:
+  - 18.1
+  - 17.5
+env:
+  - ERSTAR_DEFAULT=1
+  - ERSTAR_NIFEXT=1
